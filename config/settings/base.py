@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -32,6 +33,7 @@ THIRD_PARTY_APPS = [
     "rest_framework",
     "django_filters",
     "drf_spectacular",
+    "rest_framework_simplejwt.token_blacklist",  # módulo 35: lista negra de refresh tokens
 ]
 LOCAL_APPS = [
     "core",
@@ -193,9 +195,12 @@ SERVER_EMAIL = "errores@biblioteca.example"
 # ── API (módulo 32) ──
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",  # primero: anónimo → 401
         "rest_framework.authentication.SessionAuthentication",  # API navegable / admin
-        # JWT en el módulo 35
     ],
+    # Límites para los endpoints sensibles (módulo 35; se explica en el 36)
+    "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.ScopedRateThrottle"],
+    "DEFAULT_THROTTLE_RATES": {"login": "5/min", "registro": "5/hour", "recuperar": "3/hour"},
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",  # ✅ cerrado por defecto
     ],
@@ -214,6 +219,29 @@ REST_FRAMEWORK = {
 # drf-spectacular revisa el esquema en `manage.py check`: las APIView sin serializer dan W002 y
 # `check --deploy --fail-level WARNING` (módulo 29) fallaría. Se documentan en el módulo 38.
 SILENCED_SYSTEM_CHECKS = ["drf_spectacular.W002"]  # ← quítalo en el módulo 38
+
+# ── JWT (módulo 35) ──
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": env("JWT_SIGNING_KEY"),  # distinta de SECRET_KEY, ≥ 32 bytes
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "USER_ID_CLAIM": "user_id",
+    # el token lleva un hash de la contraseña: al cambiarla, los access ya emitidos dejan de valer
+    "CHECK_REVOKE_TOKEN": True,
+}
+JWT_REFRESH_COOKIE = {
+    "key": "refresh",
+    "path": "/api/v1/auth/",  # solo viaja a los endpoints de auth
+    "httponly": True,
+    "secure": not DEBUG,  # en local (http) no puede ser Secure; prod.py lo fuerza
+    "samesite": "Strict",
+}
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:4200")  # enlaces de los emails
 
 # ── Seguridad (módulo 29) ──
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:4200"])

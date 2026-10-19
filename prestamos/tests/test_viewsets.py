@@ -150,4 +150,4 @@ def test_me(socio):
     assert (socio.nombre, socio.email, socio.idioma) == ("Ana", r.json()["email"], "en")
     assert socio.email != "otro@example.com"  # read_only: se ignora
     assert api.put("/api/v1/auth/me/", {"nombre": "X"}).status_code == 405
-    assert cliente().get("/api/v1/auth/me/").status_code == 403
+    assert cliente().get("/api/v1/auth/me/").status_code == 401  # 403 antes del módulo 35

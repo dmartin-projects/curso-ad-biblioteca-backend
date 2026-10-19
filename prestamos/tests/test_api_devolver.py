@@ -84,10 +84,11 @@ def test_ajeno_da_404_y_bibliotecario_puede(api):
     assert api.post(f"/api/v1/prestamos/{prestamo.pk}/devolver/").status_code == 200
 
 
-def test_anonimo_recibe_403_con_solo_sesion(api):
+def test_anonimo_recibe_401(api):
     prestamo = PrestamoFactory()
     r = api.post(f"/api/v1/prestamos/{prestamo.pk}/devolver/")
-    assert r.status_code == 403  # sin WWW-Authenticate no hay 401 (cambia con JWT, módulo 35)
+    # Con solo SessionAuthentication era 403; desde el módulo 35 JWT va primero → 401
+    assert r.status_code == 401 and r["WWW-Authenticate"].startswith("Bearer")
     assert Prestamo.objects.get().estado == Prestamo.Estado.ACTIVO
 
 

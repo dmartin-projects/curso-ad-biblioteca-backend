@@ -41,11 +41,11 @@ msgstr "The ISBN must have 13 digits."
 msgid "El dígito de control del ISBN no es válido."
 msgstr "The ISBN check digit is not valid."
 
-#: config/settings/base.py:119
+#: config/settings/base.py:121
 msgid "Español"
 msgstr "Spanish"
 
-#: config/settings/base.py:119
+#: config/settings/base.py:121
 msgid "Inglés"
 msgstr "English"
 
@@ -190,3 +190,86 @@ msgstr "return by"
 #: templates/emails/recordatorio.txt:5
 msgid "días"
 msgstr "days"
+
+#: usuarios/api/auth.py:53
+msgid "Sin sesión."
+msgstr "No session."
+
+#: usuarios/api/serializers.py:49
+msgid "La contraseña actual no es correcta."
+msgstr "The current password is not correct."
+
+#: usuarios/api/views.py:26
+msgid "Enlace no válido o caducado."
+msgstr "Invalid or expired link."
+
+#: usuarios/api/views.py:57
+msgid "Revisa tu email: te hemos enviado un enlace para continuar."
+msgstr "Check your email: we have sent you a link to continue."
+
+#: usuarios/api/views.py:95
+msgid "Si el email existe, te hemos enviado un enlace."
+msgstr "If the email exists, we have sent you a link."
+
+#: usuarios/tasks.py:15
+msgid "Completa tu registro"
+msgstr "Complete your registration"
+
+#: usuarios/tasks.py:17
+#, python-format
+msgid ""
+"Hola %(nombre)s:\n"
+"\n"
+"Para completar tu registro, elige tu contraseña en este enlace:\n"
+"%(enlace)s\n"
+"\n"
+"Si no te has registrado tú, ignora este mensaje: sin ese paso la cuenta no "
+"se activa."
+msgstr ""
+"Hello %(nombre)s,\n"
+"\n"
+"To complete your registration, choose your password with this link:\n"
+"%(enlace)s\n"
+"\n"
+"If you did not sign up, ignore this message: without that step the account "
+"is not activated."
+
+#: usuarios/tasks.py:32
+msgid "Ya tienes una cuenta"
+msgstr "You already have an account"
+
+#: usuarios/tasks.py:34
+#, python-format
+msgid ""
+"Hola %(nombre)s:\n"
+"\n"
+"Alguien ha intentado registrarse con este email, pero ya tienes una cuenta. "
+"Si no recuerdas la contraseña, elige una nueva aquí:\n"
+"%(enlace)s\n"
+"\n"
+"Si no has sido tú, ignora este mensaje: tu cuenta no ha cambiado."
+msgstr ""
+"Hello %(nombre)s,\n"
+"\n"
+"Someone tried to sign up with this email, but you already have an account. "
+"If you do not remember your password, choose a new one here:\n"
+"%(enlace)s\n"
+"\n"
+"If it was not you, ignore this message: your account has not changed."
+
+#: usuarios/tasks.py:49
+msgid "Recupera tu contraseña"
+msgstr "Reset your password"
+
+#: usuarios/tasks.py:51
+#, python-format
+msgid ""
+"Para elegir una contraseña nueva entra en:\n"
+"%(enlace)s\n"
+"\n"
+"Si no lo has pedido tú, ignora este mensaje."
+msgstr ""
+"To choose a new password, go to:\n"
+"%(enlace)s\n"
+"\n"
+"If you did not request it, ignore this message."

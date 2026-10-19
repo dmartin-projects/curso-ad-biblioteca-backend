@@ -5,4 +5,5 @@ urlpatterns = [
     path("", include("catalogo.api.urls")),
     path("", include("prestamos.api.urls")),
     path("auth/", include("usuarios.api.urls")),
+    path("", include("notificaciones.api.urls")),  # ticket del WebSocket (módulo 35)
 ]

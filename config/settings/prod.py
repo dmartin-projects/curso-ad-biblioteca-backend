@@ -10,6 +10,7 @@ SECURE_SSL_REDIRECT = True
 SECURE_REDIRECT_EXEMPT = [r"^health/"]  # los healthchecks internos llegan por HTTP
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
+JWT_REFRESH_COOKIE = {**JWT_REFRESH_COOKIE, "secure": True}  # noqa: F405  (por si DEBUG se cuela)
 SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=3600)  # noqa: F405  (súbelo poco a poco)
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
