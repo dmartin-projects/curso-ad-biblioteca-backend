@@ -14,18 +14,18 @@ def libro_a_dict(libro: Libro) -> dict:
         "id": libro.pk,
         "titulo": libro.titulo,
         "isbn": libro.isbn,
-        "autor": libro.autor.nombre,
+        "autores": [autor.nombre for autor in libro.autores.all()],
         "publicado": libro.publicado.isoformat() if libro.publicado else None,
     }
 
 
 @require_GET
 def lista_libros(request):
-    libros = Libro.objects.select_related("autor").order_by("titulo")
+    libros = Libro.objects.prefetch_related("autores").order_by("titulo")
     if q := request.GET.get("q"):
         libros = libros.filter(titulo__icontains=q)
     if autor := request.GET.get("autor"):
-        libros = libros.filter(autor__slug=autor)
+        libros = libros.filter(autores__slug=autor).distinct()
     if desde := request.GET.get("desde"):
         if desde.isdigit():
             libros = libros.filter(publicado__year__gte=int(desde))
@@ -41,7 +41,7 @@ def lista_libros(request):
 
 @require_http_methods(["GET", "PATCH", "DELETE"])
 def detalle_libro(request, pk):
-    libro = get_object_or_404(Libro.objects.select_related("autor"), pk=pk)
+    libro = get_object_or_404(Libro.objects.prefetch_related("autores"), pk=pk)
 
     if request.method == "GET":
         return JsonResponse(libro_a_dict(libro))
@@ -84,7 +84,7 @@ def libro_por_isbn(request, isbn):
 
 @require_GET
 def libros_por_anio(request, anio):
-    libros = Libro.objects.select_related("autor").filter(publicado__year=anio)
+    libros = Libro.objects.prefetch_related("autores").filter(publicado__year=anio)
     return JsonResponse([libro_a_dict(libro) for libro in libros], safe=False)
 
 
@@ -128,9 +128,10 @@ class ExportarLibrosCSV(FiltrosLibroMixin, BaseListView):
         respuesta = HttpResponse(content_type="text/csv; charset=utf-8")
         respuesta["Content-Disposition"] = 'attachment; filename="libros.csv"'
         writer = csv.writer(respuesta)
-        writer.writerow(["id", "titulo", "isbn", "autor"])
+        writer.writerow(["id", "titulo", "isbn", "autores"])
         for libro in context["object_list"]:
-            writer.writerow([libro.pk, libro.titulo, libro.isbn, libro.autor.nombre])
+            autores = "; ".join(autor.nombre for autor in libro.autores.all())
+            writer.writerow([libro.pk, libro.titulo, libro.isbn, autores])
         return respuesta
 
 

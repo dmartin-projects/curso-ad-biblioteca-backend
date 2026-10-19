@@ -13,8 +13,12 @@ class Prestamo(ModeloConFechas):
         ACTIVO = "activo", "Activo"
         DEVUELTO = "devuelto", "Devuelto"
 
-    ejemplar = models.ForeignKey("catalogo.Ejemplar", on_delete=models.PROTECT, related_name="prestamos")
-    socio = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="prestamos")
+    ejemplar = models.ForeignKey(
+        "catalogo.Ejemplar", on_delete=models.PROTECT, related_name="prestamos"
+    )
+    socio = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="prestamos"
+    )
     fecha_inicio = models.DateTimeField(db_default=Now())
     fecha_limite = models.DateTimeField()
     fecha_devolucion = models.DateTimeField(null=True, blank=True)
@@ -26,12 +30,16 @@ class Prestamo(ModeloConFechas):
         ordering = ["-fecha_inicio"]
         indexes = [
             models.Index(fields=["socio", "estado"], name="prestamo_socio_estado"),
-            models.Index(fields=["fecha_limite"], name="prestamo_activo_limite",
-                         condition=models.Q(estado="activo")),
+            models.Index(
+                fields=["fecha_limite"],
+                name="prestamo_activo_limite",
+                condition=models.Q(estado="activo"),
+            ),
         ]
         constraints = [
             models.UniqueConstraint(
-                fields=["ejemplar"], condition=models.Q(estado="activo"),
+                fields=["ejemplar"],
+                condition=models.Q(estado="activo"),
                 name="un_prestamo_activo_por_ejemplar",
                 violation_error_message="Este ejemplar ya está prestado.",
             ),
@@ -56,3 +64,20 @@ class Multa(ModeloConFechas):
         db_persist=True,
     )
     pagada = models.BooleanField(default=False)
+
+
+class PrestamoActivoManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(estado=Prestamo.Estado.ACTIVO)
+
+
+class PrestamoActivo(Prestamo):
+    """Proxy: la misma tabla, solo los activos. En el admin aparece como sección propia."""
+
+    objects = PrestamoActivoManager()
+
+    class Meta:
+        proxy = True
+        verbose_name = "préstamo activo"
+        verbose_name_plural = "préstamos activos"
+        ordering = ["fecha_limite"]

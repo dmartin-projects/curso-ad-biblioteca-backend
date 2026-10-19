@@ -11,12 +11,12 @@ pytestmark = pytest.mark.django_db
 def test_filtros_y_detalle(client):
     le_guin = Autor.objects.create(nombre="Ursula K. Le Guin", slug="le-guin")
     herbert = Autor.objects.create(nombre="Frank Herbert", slug="herbert")
-    Libro.objects.create(
-        titulo="Dune", isbn="9788497593793", autor=herbert, publicado=dt.date(1965, 8, 1)
+    dune = Libro.objects.create(titulo="Dune", isbn="9788497593793", publicado=dt.date(1965, 8, 1))
+    dune.autores.add(herbert)
+    desposeidos = Libro.objects.create(
+        titulo="Los desposeídos", isbn="9788445076187", publicado=dt.date(1974, 5, 1)
     )
-    Libro.objects.create(
-        titulo="Los desposeídos", isbn="9788445076187", autor=le_guin, publicado=dt.date(1974, 5, 1)
-    )
+    desposeidos.autores.add(le_guin)
 
     assert client.get("/catalogo/libros/").json()["count"] == 2
     assert client.get("/catalogo/libros/?desde=1970").json()["count"] == 1
@@ -30,8 +30,7 @@ def test_filtros_y_detalle(client):
 
 
 def test_detalle_libro_exige_permiso_para_cambiar_o_borrar(client, admin_client):
-    herbert = Autor.objects.create(nombre="Frank Herbert", slug="herbert")
-    libro = Libro.objects.create(titulo="Dune", isbn="9788497593793", autor=herbert)
+    libro = Libro.objects.create(titulo="Dune", isbn="9788497593793")
     url = f"/catalogo/libros/{libro.pk}/"
     cambio = {"data": {"titulo": "Otro"}, "content_type": "application/json"}
 

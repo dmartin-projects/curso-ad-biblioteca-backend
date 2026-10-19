@@ -28,14 +28,10 @@ class BusquedaAvanzadaForm(forms.Form):
 class LibroForm(forms.ModelForm):
     class Meta:
         model = Libro
-        fields = ["titulo", "isbn", "autor", "publicado"]
+        fields = ["titulo", "isbn", "autores", "publicado"]
         labels = {"isbn": "ISBN-13"}
         help_texts = {"isbn": "Sin guiones."}
         error_messages = {"isbn": {"unique": "Ya existe un libro con ese ISBN."}}
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["isbn"].validators.append(validar_isbn13)  # el campo generado, con Meta aplicado
 
     def clean_titulo(self):
         return self.cleaned_data["titulo"].strip()

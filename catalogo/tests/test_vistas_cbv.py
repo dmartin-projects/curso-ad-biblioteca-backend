@@ -11,12 +11,12 @@ pytestmark = pytest.mark.django_db
 def datos():
     le_guin = Autor.objects.create(nombre="Ursula K. Le Guin", slug="le-guin")
     herbert = Autor.objects.create(nombre="Frank Herbert", slug="herbert")
-    Libro.objects.create(
-        titulo="Dune", isbn="9788497593793", autor=herbert, publicado=dt.date(1965, 8, 1)
+    dune = Libro.objects.create(titulo="Dune", isbn="9788497593793", publicado=dt.date(1965, 8, 1))
+    dune.autores.add(herbert)
+    desposeidos = Libro.objects.create(
+        titulo="Los desposeídos", isbn="9788445076187", publicado=dt.date(1974, 5, 1)
     )
-    Libro.objects.create(
-        titulo="Los desposeídos", isbn="9788445076187", autor=le_guin, publicado=dt.date(1974, 5, 1)
-    )
+    desposeidos.autores.add(le_guin)
 
 
 def test_lista_cbv_con_los_mismos_filtros(client):
@@ -40,6 +40,6 @@ def test_exportar_csv_filtrado(client):
     assert r["Content-Type"] == "text/csv; charset=utf-8"
     filas = r.content.decode().splitlines()
     assert filas == [
-        "id,titulo,isbn,autor",
+        "id,titulo,isbn,autores",
         f"{Libro.objects.get(titulo='Dune').pk},Dune,9788497593793,Frank Herbert",
     ]

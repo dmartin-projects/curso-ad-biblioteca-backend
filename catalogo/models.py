@@ -1,8 +1,10 @@
 # catalogo/models.py
 from django.db import models
+from django.db.models.functions import Lower
 from django.urls import reverse
 
 from core.models import ModeloConFechas
+
 from .fields import ISBNField
 
 
@@ -22,7 +24,9 @@ class Autor(ModeloConFechas):
 
 class Genero(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
-    padre = models.ForeignKey("self", null=True, blank=True, on_delete=models.PROTECT, related_name="subgeneros")
+    padre = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.PROTECT, related_name="subgeneros"
+    )
 
     def __str__(self):
         return self.nombre
@@ -36,6 +40,11 @@ class Libro(ModeloConFechas):
     publicado = models.DateField(null=True, blank=True)
     paginas = models.PositiveIntegerField(null=True, blank=True)
     sinopsis = models.TextField(blank=True)
+    titulo_busqueda = models.GeneratedField(
+        expression=Lower("titulo"),
+        output_field=models.CharField(max_length=300),
+        db_persist=True,
+    )
 
     class Meta:
         ordering = ["titulo"]
@@ -64,6 +73,9 @@ class Autoria(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["libro", "autor", "rol"], name="autoria_unica"),
         ]
+
+    def __str__(self):
+        return f"{self.autor} ({self.get_rol_display()}) · {self.libro}"
 
 
 class Ejemplar(ModeloConFechas):

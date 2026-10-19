@@ -19,7 +19,7 @@ def test_busqueda_convierte_y_valida():
 
 def test_crear_libro_por_json(admin_client):  # la view exige catalogo.add_libro
     autor = Autor.objects.create(nombre="Frank Herbert", slug="herbert")
-    malo = {"titulo": "Dune", "isbn": "9788497593794", "autor": autor.pk}
+    malo = {"titulo": "Dune", "isbn": "9788497593794", "autores": [autor.pk]}
     r = admin_client.post(
         "/catalogo/libros/nuevo/", json.dumps(malo), content_type="application/json"
     )
