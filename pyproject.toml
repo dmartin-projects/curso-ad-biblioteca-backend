@@ -39,8 +39,10 @@ dev = [
     "pypdf>=6.21.1",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
     "pytest-django>=4.14.0",
     "pytest-mock>=3.17.0",
+    "pytest-xdist>=3.8.0",
     "redis>=8.1.0",
     "respx>=0.23.1",
     "ruff>=0.17.1",
@@ -49,6 +51,14 @@ dev = [
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py", "tests.py"]
+addopts = "--strict-markers -ra"  # sin --reuse-db: ver la nota del módulo 31
+filterwarnings = ["error::RuntimeWarning"]  # p. ej. datetimes sin zona → fallo
+
+[tool.coverage.run]
+source = ["."]
+omit = ["*/migrations/*", "*/tests/*", "config/*", "manage.py", "conftest.py"]
+branch = true
 
 [tool.ruff]
 line-length = 100
