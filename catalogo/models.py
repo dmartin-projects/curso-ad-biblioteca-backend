@@ -11,6 +11,7 @@ from .fields import ISBNField
 
 class Autor(ModeloConFechas):
     nombre = models.CharField(max_length=200)
+    apellidos = models.CharField(max_length=200, blank=True)
     slug = models.SlugField(unique=True)
     biografia = models.TextField(blank=True)
     nacimiento = models.DateField(null=True, blank=True)
@@ -23,14 +24,24 @@ class Autor(ModeloConFechas):
         return self.nombre
 
 
+class GeneroManager(models.Manager):
+    def get_by_natural_key(self, nombre):
+        return self.get(nombre=nombre)
+
+
 class Genero(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
     padre = models.ForeignKey(
         "self", null=True, blank=True, on_delete=models.PROTECT, related_name="subgeneros"
     )
 
+    objects = GeneroManager()
+
     def __str__(self):
         return self.nombre
+
+    def natural_key(self):
+        return (self.nombre,)
 
 
 class LibroQuerySet(models.QuerySet):

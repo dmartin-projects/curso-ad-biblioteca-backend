@@ -1,0 +1,39 @@
+[
+{
+  "model": "catalogo.genero",
+  "fields": {
+    "nombre": "Novela",
+    "padre": null
+  }
+},
+{
+  "model": "catalogo.genero",
+  "fields": {
+    "nombre": "Ensayo",
+    "padre": null
+  }
+},
+{
+  "model": "catalogo.genero",
+  "fields": {
+    "nombre": "Poesía",
+    "padre": null
+  }
+},
+{
+  "model": "catalogo.genero",
+  "fields": {
+    "nombre": "Ciencia ficción",
+    "padre": [
+      "Novela"
+    ]
+  }
+},
+{
+  "model": "catalogo.genero",
+  "fields": {
+    "nombre": "Infantil",
+    "padre": null
+  }
+}
+]

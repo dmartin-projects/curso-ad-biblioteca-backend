@@ -32,7 +32,8 @@ def datos():
     herbert = Autor.objects.create(nombre="Frank Herbert", slug="herbert")
     tolkien = Autor.objects.create(nombre="J. R. R. Tolkien", slug="tolkien")
     sf, fantasia = (
-        Genero.objects.create(nombre="Ciencia ficción"),
+        # "Ciencia ficción" ya existe: la crea la migración de datos del módulo 10
+        Genero.objects.get_or_create(nombre="Ciencia ficción")[0],
         Genero.objects.create(nombre="Fantasía"),
     )
     dune = Libro.objects.create(titulo="Dune", isbn="9788497593793")
@@ -86,7 +87,7 @@ def test_1_titulo_o_autor_con_le(datos):
 
 def test_2_libros_por_genero(datos):
     qs = Genero.objects.annotate(n=Count("libros")).order_by("-n", "nombre")
-    assert [(g.nombre, g.n) for g in qs] == [("Ciencia ficción", 2), ("Fantasía", 2)]
+    assert [(g.nombre, g.n) for g in qs[:2]] == [("Ciencia ficción", 2), ("Fantasía", 2)]
 
 
 def test_3_socios_con_mas_de_2_activos(datos):
