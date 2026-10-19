@@ -2,6 +2,7 @@
 from datetime import timedelta
 
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import DateTimeRangeField, RangeOperators
 from django.db import models
@@ -42,6 +43,7 @@ class Prestamo(ModeloConFechas):
     fecha_limite = models.DateTimeField()
     fecha_devolucion = models.DateTimeField(null=True, blank=True)
     estado = models.CharField(max_length=10, choices=Estado, default=Estado.ACTIVO)
+    notas = GenericRelation("core.Nota", related_query_name="prestamo")
 
     DURACION = timedelta(days=21)
 

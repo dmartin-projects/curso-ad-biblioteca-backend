@@ -1,4 +1,5 @@
 # catalogo/models.py
+from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex, OpClass
 from django.contrib.postgres.search import SearchVectorField
@@ -18,6 +19,7 @@ class Autor(ModeloConFechas):
     slug = models.SlugField(unique=True)
     biografia = models.TextField(blank=True)
     nacimiento = models.DateField(null=True, blank=True)
+    notas = GenericRelation("core.Nota", related_query_name="autor")
 
     class Meta:
         ordering = ["nombre"]
@@ -82,6 +84,7 @@ class Libro(ModeloConFechas):
     publicado = models.DateField(null=True, blank=True)
     paginas = models.PositiveIntegerField(null=True, blank=True)
     sinopsis = models.TextField(blank=True)
+    notas = GenericRelation("core.Nota", related_query_name="libro")
     metadatos = models.JSONField(default=dict, blank=True)
     etiquetas = ArrayField(models.CharField(max_length=50), default=list, blank=True)
     busqueda = SearchVectorField(null=True, editable=False)
