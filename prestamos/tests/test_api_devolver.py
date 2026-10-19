@@ -48,7 +48,8 @@ def test_devolver_en_plazo(api):
     api.force_authenticate(prestamo.socio)
     r = api.post(f"/api/v1/prestamos/{prestamo.pk}/devolver/")
     assert r.status_code == 200
-    assert r.json() == {"id": prestamo.pk, "estado": "devuelto", "multa": None}
+    datos = r.json()  # desde el módulo 34, el préstamo completo (PrestamoSerializer)
+    assert (datos["id"], datos["estado"], datos["multa"]) == (prestamo.pk, "devuelto", None)
     prestamo.ejemplar.refresh_from_db()
     assert prestamo.ejemplar.estado == Ejemplar.Estado.DISPONIBLE
 

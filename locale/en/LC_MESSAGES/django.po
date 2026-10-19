@@ -29,6 +29,10 @@ msgstr "Add at least one author."
 msgid "Hay autores repetidos."
 msgstr "There are duplicate authors."
 
+#: catalogo/api/views.py:64
+msgid "El libro tiene préstamos registrados y no se puede borrar."
+msgstr "The book has recorded loans and cannot be deleted."
+
 #: catalogo/validators.py:10
 msgid "El ISBN debe tener 13 dígitos."
 msgstr "The ISBN must have 13 digits."
@@ -58,13 +62,13 @@ msgstr "The file exceeds %(megas)s MB."
 msgid "El archivo no es un PDF válido."
 msgstr "The file is not a valid PDF."
 
-#: prestamos/api/views.py:28
-msgid "El préstamo ya estaba devuelto."
-msgstr "The loan had already been returned."
-
-#: prestamos/api/views.py:50
+#: prestamos/api/views.py:44
 msgid "No existe ese ejemplar."
 msgstr "That copy does not exist."
+
+#: prestamos/api/views.py:56
+msgid "El préstamo ya estaba devuelto."
+msgstr "The loan had already been returned."
 
 #: prestamos/emails.py:23
 msgid "Tus préstamos vencen pronto"
@@ -120,11 +124,11 @@ msgstr "Copy %(codigo)s is not available"
 msgid "Ya tienes %(n)s préstamos activos, el máximo."
 msgstr "You already have %(n)s active loans, the maximum."
 
-#: prestamos/services.py:100
+#: prestamos/services.py:106
 msgid "Solo se renuevan préstamos activos."
 msgstr "Only active loans can be renewed."
 
-#: prestamos/services.py:102
+#: prestamos/services.py:108
 msgid "Un préstamo vencido no se renueva: devuélvelo."
 msgstr "An overdue loan cannot be renewed: return it."
 

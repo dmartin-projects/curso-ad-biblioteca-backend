@@ -22,8 +22,14 @@ class PrestamoSerializer(serializers.ModelSerializer):
 
     libro = LibroMiniSerializer(source="ejemplar.libro", read_only=True)
     ejemplar = serializers.CharField(source="ejemplar.codigo", read_only=True)
+    multa = serializers.SerializerMethodField()
 
     class Meta:
         model = Prestamo
-        fields = ["id", "libro", "ejemplar", "estado", "fecha_inicio", "fecha_limite"]
+        fields = ["id", "libro", "ejemplar", "estado", "fecha_inicio", "fecha_limite", "multa"]
         read_only_fields = fields
+
+    def get_multa(self, prestamo) -> str | None:
+        # select_related("multa") en la vista: si no, una consulta por préstamo
+        multa = getattr(prestamo, "multa", None)  # OneToOne inverso: no existe → AttributeError
+        return str(multa.importe_base) if multa else None
