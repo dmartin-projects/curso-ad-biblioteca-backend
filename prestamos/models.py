@@ -4,8 +4,25 @@ from datetime import timedelta
 from django.conf import settings
 from django.db import models
 from django.db.models.functions import Now
+from django.utils import timezone
 
 from core.models import ModeloConFechas
+
+
+class PrestamoQuerySet(models.QuerySet):
+    def activos(self):
+        return self.filter(estado=Prestamo.Estado.ACTIVO)
+
+    def vencidos(self):
+        return self.activos().filter(fecha_limite__lt=timezone.now())
+
+    def de_socio(self, socio):
+        return self.filter(socio=socio)
+
+
+class PrestamoManager(models.Manager.from_queryset(PrestamoQuerySet)):
+    def get_queryset(self):
+        return super().get_queryset().select_related("ejemplar__libro", "socio")
 
 
 class Prestamo(ModeloConFechas):
@@ -25,6 +42,8 @@ class Prestamo(ModeloConFechas):
     estado = models.CharField(max_length=10, choices=Estado, default=Estado.ACTIVO)
 
     DURACION = timedelta(days=21)
+
+    objects = PrestamoManager()
 
     class Meta:
         ordering = ["-fecha_inicio"]

@@ -21,11 +21,11 @@ def libro_a_dict(libro: Libro) -> dict:
 
 @require_GET
 def lista_libros(request):
-    libros = Libro.objects.prefetch_related("autores").order_by("titulo")
+    libros = Libro.objects.para_listado().order_by("titulo")
     if q := request.GET.get("q"):
-        libros = libros.filter(titulo__icontains=q)
+        libros = libros.buscar(q)
     if autor := request.GET.get("autor"):
-        libros = libros.filter(autores__slug=autor).distinct()
+        libros = libros.de_autor(autor)
     if desde := request.GET.get("desde"):
         if desde.isdigit():
             libros = libros.filter(publicado__year__gte=int(desde))

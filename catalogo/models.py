@@ -1,5 +1,6 @@
 # catalogo/models.py
 from django.db import models
+from django.db.models import Count, Exists, OuterRef, Q
 from django.db.models.functions import Lower
 from django.urls import reverse
 
@@ -32,6 +33,32 @@ class Genero(models.Model):
         return self.nombre
 
 
+class LibroQuerySet(models.QuerySet):
+    def disponibles(self):
+        hay_disponible = Ejemplar.objects.filter(
+            libro=OuterRef("pk"), estado=Ejemplar.Estado.DISPONIBLE
+        )
+        return self.filter(Exists(hay_disponible))
+
+    def de_autor(self, slug: str):
+        return self.filter(autores__slug=slug).distinct()
+
+    def buscar(self, texto: str):
+        return self.filter(
+            Q(titulo__icontains=texto) | Q(autores__nombre__icontains=texto)
+        ).distinct()
+
+    def con_estadisticas(self):
+        return self.annotate(
+            n_ejemplares=Count("ejemplares", distinct=True),
+            n_prestamos=Count("ejemplares__prestamos", distinct=True),
+        )
+
+    def para_listado(self):
+        """Todo lo que necesita la vista de listado, optimizado."""
+        return self.prefetch_related("autores", "generos").con_estadisticas()
+
+
 class Libro(ModeloConFechas):
     titulo = models.CharField(max_length=300)
     isbn = ISBNField(unique=True)
@@ -45,6 +72,8 @@ class Libro(ModeloConFechas):
         output_field=models.CharField(max_length=300),
         db_persist=True,
     )
+
+    objects = LibroQuerySet.as_manager()
 
     class Meta:
         ordering = ["titulo"]
