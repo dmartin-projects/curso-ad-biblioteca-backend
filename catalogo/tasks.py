@@ -52,9 +52,9 @@ def completar_desde_openlibrary(self, libro_id: int) -> str:
     try:
         datos = breaker_openlibrary.llamar(OpenLibraryClient().buscar_isbn, libro.isbn)
     except CircuitoAbierto as exc:
-        raise self.retry(exc=exc, countdown=120)  # vuelve cuando el circuito se haya enfriado
+        raise self.retry(exc=exc, countdown=120) from exc  # cuando el circuito se enfríe
     except OpenLibraryError as exc:
-        raise self.retry(exc=exc, countdown=60)
+        raise self.retry(exc=exc, countdown=60) from exc
     if datos is None:
         return "no encontrado"
 
