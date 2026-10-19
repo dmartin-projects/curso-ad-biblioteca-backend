@@ -12,6 +12,7 @@ urlpatterns = [
     path("libros/", views.lista_libros, name="lista_libros"),
     path("libros/nuevo/", views.crear_libro, name="crear_libro"),
     path("libros/buscar/", views.buscar_libros, name="buscar_libros"),
+    path("recientes/", views.recientes, name="recientes"),
     path("autores/autocompletar/", views.autocompletar_autores, name="autocompletar_autores"),
     path("libros/isbn/<isbn:isbn>/", views.libro_por_isbn, name="libro_por_isbn"),
     path("libros/anio/<anio:anio>/", views.libros_por_anio, name="libros_por_anio"),

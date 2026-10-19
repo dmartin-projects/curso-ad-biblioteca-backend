@@ -44,6 +44,7 @@ def detalle_libro(request, pk):
     libro = get_object_or_404(Libro.objects.prefetch_related("autores"), pk=pk)
 
     if request.method == "GET":
+        registrar_visto(request, libro.pk)
         return JsonResponse(libro_a_dict(libro))
 
     # leer es público; cambiar o borrar exige el permission de ese verbo (anónimo incluido → 403)
@@ -212,3 +213,20 @@ def autocompletar_autores(request):
         .order_by("-similitud")[:10]
     )
     return JsonResponse({"results": [{"id": a.pk, "nombre": a.nombre} for a in autores]})
+
+
+# ── Módulo 13: "vistos recientemente" en la sesión ──
+MAX_VISTOS = 5
+
+
+def registrar_visto(request, pk: int) -> None:
+    vistos = [v for v in request.session.get("vistos", []) if v != pk]
+    request.session["vistos"] = [pk, *vistos][:MAX_VISTOS]  # reasignar: Django marca la sesión
+
+
+@require_GET
+def recientes(request):
+    ids = request.session.get("vistos", [])
+    por_id = Libro.objects.prefetch_related("autores").in_bulk(ids)
+    # en el orden de la sesión (el más reciente primero); los borrados desaparecen solos
+    return JsonResponse({"results": [libro_a_dict(por_id[pk]) for pk in ids if pk in por_id]})

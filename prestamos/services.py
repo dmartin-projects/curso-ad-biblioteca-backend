@@ -54,3 +54,20 @@ def prestar(ejemplar_id: int, socio) -> Prestamo:
 
     transaction.on_commit(lambda: print(f"Préstamo {prestamo.pk} confirmado"))
     return prestamo
+
+
+class PrestamoNoRenovable(Exception):
+    pass
+
+
+@transaction.atomic
+def renovar(prestamo: Prestamo) -> Prestamo:
+    """Amplía el plazo DURACION días. Solo préstamos activos y que aún no han vencido."""
+    prestamo = Prestamo.objects.select_for_update().get(pk=prestamo.pk)
+    if prestamo.estado != Prestamo.Estado.ACTIVO:
+        raise PrestamoNoRenovable("Solo se renuevan préstamos activos.")
+    if prestamo.fecha_limite < timezone.now():
+        raise PrestamoNoRenovable("Un préstamo vencido no se renueva: devuélvelo.")
+    prestamo.fecha_limite += Prestamo.DURACION
+    prestamo.save(update_fields=["fecha_limite"])
+    return prestamo
