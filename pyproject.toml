@@ -1,0 +1,35 @@
+[project]
+name = "biblioteca"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "django>=6.1,<6.2",
+    "django-environ>=0.14.0",
+    "psycopg[binary]>=3.3.6",
+]
+
+[dependency-groups]
+dev = [
+    "ipython>=9.17.1",
+    "pytest>=9.1.1",
+    "pytest-django>=4.14.0",
+    "pytest-mock>=3.17.0",
+    "ruff>=0.17.1",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "DJ"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"config/settings/*.py" = ["F403", "F405"]
