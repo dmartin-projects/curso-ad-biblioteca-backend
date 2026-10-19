@@ -211,6 +211,9 @@ REST_FRAMEWORK = {
     "COERCE_DECIMAL_TO_STRING": True,
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
 }
+# drf-spectacular revisa el esquema en `manage.py check`: las APIView sin serializer dan W002 y
+# `check --deploy --fail-level WARNING` (módulo 29) fallaría. Se documentan en el módulo 38.
+SILENCED_SYSTEM_CHECKS = ["drf_spectacular.W002"]  # ← quítalo en el módulo 38
 
 # ── Seguridad (módulo 29) ──
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:4200"])
