@@ -82,6 +82,14 @@ class LibroQuerySet(models.QuerySet):
             n_prestamos=Count("ejemplares__prestamos", distinct=True),
         )
 
+    def con_disponibles(self):
+        """ejemplares_disponibles en la misma consulta (para LibroListaSerializer, módulo 33)."""
+        return self.annotate(
+            ejemplares_disponibles=Count(
+                "ejemplares", filter=Q(ejemplares__estado="disponible"), distinct=True
+            )
+        )
+
     def para_listado(self):
         """Todo lo que necesita la vista de listado, optimizado."""
         return self.prefetch_related("autores", "generos").con_estadisticas()

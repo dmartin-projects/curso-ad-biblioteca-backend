@@ -17,6 +17,18 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: catalogo/api/serializers.py:83
+msgid "La fecha de publicación no puede ser futura."
+msgstr "The publication date cannot be in the future."
+
+#: catalogo/api/serializers.py:88
+msgid "Indica al menos un autor."
+msgstr "Add at least one author."
+
+#: catalogo/api/serializers.py:90
+msgid "Hay autores repetidos."
+msgstr "There are duplicate authors."
+
 #: catalogo/validators.py:10
 msgid "El ISBN debe tener 13 dígitos."
 msgstr "The ISBN must have 13 digits."
@@ -46,9 +58,13 @@ msgstr "The file exceeds %(megas)s MB."
 msgid "El archivo no es un PDF válido."
 msgstr "The file is not a valid PDF."
 
-#: prestamos/api/views.py:25
+#: prestamos/api/views.py:28
 msgid "El préstamo ya estaba devuelto."
 msgstr "The loan had already been returned."
+
+#: prestamos/api/views.py:50
+msgid "No existe ese ejemplar."
+msgstr "That copy does not exist."
 
 #: prestamos/emails.py:23
 msgid "Tus préstamos vencen pronto"
