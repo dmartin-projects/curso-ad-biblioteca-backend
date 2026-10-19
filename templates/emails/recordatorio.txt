@@ -1,10 +1,10 @@
-{% load prestamos_extras %}{% autoescape off %}{% saludo %}, {{ socio.nombre|default:socio.email }}:
+{% load i18n prestamos_extras %}{% autoescape off %}{% saludo %}, {{ socio.nombre|default:socio.email }}:
 
-Estos préstamos vencen pronto:
+{% translate "Estos préstamos vencen pronto:" %}
 {% for p in prestamos %}
-- {{ p.ejemplar.libro.titulo }}: devolver antes del {{ p.fecha_limite|date:"d/m/Y" }} ({{ p.fecha_limite|dias_restantes }} días)
+- {{ p.ejemplar.libro.titulo }}: {% translate "devolver antes del" %} {{ p.fecha_limite|date:"d/m/Y" }} ({{ p.fecha_limite|dias_restantes }} {% translate "días" %})
 {% endfor %}
-Puedes renovarlos desde tu cuenta: {{ site_url }}/prestamos/
+{% translate "Puedes renovarlos desde tu cuenta" %}: {{ site_url }}/prestamos/
 
-Este email se ha enviado automáticamente.
+{% translate "Este email se ha enviado automáticamente." %}
 {% endautoescape %}

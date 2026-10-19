@@ -14,6 +14,9 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     fecha_alta = models.DateTimeField(default=timezone.now)
+    # módulo 28: preferencias para emails, tareas y fechas
+    idioma = models.CharField(max_length=10, choices=settings.LANGUAGES, default="es")
+    zona_horaria = models.CharField(max_length=50, default="Europe/Madrid")
 
     objects = UsuarioManager()
 

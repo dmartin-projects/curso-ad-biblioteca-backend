@@ -1,6 +1,7 @@
 # prestamos/templatetags/prestamos_extras.py
 from django import template
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 register = template.Library()
 
@@ -21,7 +22,7 @@ def dias_restantes(fecha):
 @register.simple_tag(takes_context=True)
 def saludo(context):
     hora = timezone.localtime().hour
-    return "Buenos días" if hora < 14 else "Buenas tardes"
+    return _("Buenos días") if hora < 14 else _("Buenas tardes")
 
 
 @register.inclusion_tag("prestamos/_resumen.html")

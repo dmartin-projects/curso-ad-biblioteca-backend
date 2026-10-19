@@ -2,6 +2,7 @@ from pathlib import Path
 
 import environ
 from celery.schedules import crontab
+from django.utils.translation import gettext_lazy as _
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent  # .../backend
 
@@ -57,9 +58,11 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # justo después de Security
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",  # después de sesiones, antes de Common
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "core.middleware.zona_horaria_middleware",  # después de Auth (usa request.user)
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "core.middleware.MantenimientoMiddleware",
@@ -104,7 +107,9 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-LANGUAGE_CODE = "es-es"
+LANGUAGE_CODE = "es"
+LANGUAGES = [("es", _("Español")), ("en", _("Inglés"))]
+LOCALE_PATHS = [BASE_DIR / "locale"]
 TIME_ZONE = "Europe/Madrid"
 USE_I18N = True
 USE_TZ = True  # guarda las fechas en UTC y convierte al mostrarlas

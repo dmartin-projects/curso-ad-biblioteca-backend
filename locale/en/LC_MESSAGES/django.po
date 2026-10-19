@@ -1,0 +1,168 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-20 00:18+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: catalogo/validators.py:10
+msgid "El ISBN debe tener 13 dígitos."
+msgstr "The ISBN must have 13 digits."
+
+#: catalogo/validators.py:14
+msgid "El dígito de control del ISBN no es válido."
+msgstr "The ISBN check digit is not valid."
+
+#: config/settings/base.py:108
+msgid "Español"
+msgstr "Spanish"
+
+#: config/settings/base.py:108
+msgid "Inglés"
+msgstr "English"
+
+#: core/middleware.py:73
+msgid "En mantenimiento"
+msgstr "Under maintenance"
+
+#: core/validators.py:15
+#, python-format
+msgid "El archivo supera %(megas)s MB."
+msgstr "The file exceeds %(megas)s MB."
+
+#: core/validators.py:28
+msgid "El archivo no es un PDF válido."
+msgstr "The file is not a valid PDF."
+
+#: prestamos/emails.py:23
+msgid "Tus préstamos vencen pronto"
+msgstr "Your loans are due soon"
+
+#: prestamos/models.py:34
+msgid "Activo"
+msgstr "Active"
+
+#: prestamos/models.py:35
+msgid "Devuelto"
+msgstr "Returned"
+
+#: prestamos/models.py:41
+msgid "ejemplar"
+msgstr "copy"
+
+#: prestamos/models.py:47
+msgid "socio"
+msgstr "member"
+
+#: prestamos/models.py:49
+msgid "fecha de inicio"
+msgstr "start date"
+
+#: prestamos/models.py:50
+msgid "fecha límite"
+msgstr "due date"
+
+#: prestamos/models.py:51
+msgid "fecha de devolución"
+msgstr "return date"
+
+#: prestamos/models.py:52
+msgid "estado"
+msgstr "status"
+
+#: prestamos/models.py:60
+msgid "préstamo"
+msgstr "loan"
+
+#: prestamos/models.py:61
+msgid "préstamos"
+msgstr "loans"
+
+#: prestamos/services.py:48
+#, python-format
+msgid "El ejemplar %(codigo)s no está disponible"
+msgstr "Copy %(codigo)s is not available"
+
+#: prestamos/services.py
+#, python-format
+msgid "Ya tienes %(n)s préstamos activos, el máximo."
+msgstr "You already have %(n)s active loans, the maximum."
+
+#: prestamos/services.py:100
+msgid "Solo se renuevan préstamos activos."
+msgstr "Only active loans can be renewed."
+
+#: prestamos/services.py:102
+msgid "Un préstamo vencido no se renueva: devuélvelo."
+msgstr "An overdue loan cannot be renewed: return it."
+
+#: prestamos/templatetags/prestamos_extras.py:25
+msgid "Buenos días"
+msgstr "Good morning"
+
+#: prestamos/templatetags/prestamos_extras.py:25
+msgid "Buenas tardes"
+msgstr "Good afternoon"
+
+#: prestamos/views.py:29
+msgid "El enlace ha caducado"
+msgstr "The link has expired"
+
+#: prestamos/views.py
+msgid "Este enlace ya se ha usado"
+msgstr "This link has already been used"
+
+#: prestamos/views.py:31
+msgid "Enlace no válido"
+msgstr "Invalid link"
+
+#: templates/emails/_tabla_prestamos.html:5
+msgid "Libro"
+msgstr "Book"
+
+#: templates/emails/_tabla_prestamos.html:6
+msgid "Devolver antes del"
+msgstr "Return by"
+
+#: templates/emails/_tabla_prestamos.html:7
+msgid "Días"
+msgstr "Days"
+
+#: templates/emails/base.html:13 templates/emails/recordatorio.txt:9
+msgid "Este email se ha enviado automáticamente."
+msgstr "This email was sent automatically."
+
+#: templates/emails/recordatorio.html:6
+#, python-format
+msgid "Tienes %(total)s préstamo que vence pronto:"
+msgid_plural "Tienes %(total)s préstamos que vencen pronto:"
+msgstr[0] "You have %(total)s loan due soon:"
+msgstr[1] "You have %(total)s loans due soon:"
+
+#: templates/emails/recordatorio.html:8 templates/emails/recordatorio.txt:7
+msgid "Puedes renovarlos desde tu cuenta"
+msgstr "You can renew them from your account"
+
+#: templates/emails/recordatorio.txt:3
+msgid "Estos préstamos vencen pronto:"
+msgstr "These loans are due soon:"
+
+#: templates/emails/recordatorio.txt:5
+msgid "devolver antes del"
+msgstr "return by"
+
+#: templates/emails/recordatorio.txt:5
+msgid "días"
+msgstr "days"

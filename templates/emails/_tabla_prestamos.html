@@ -1,10 +1,10 @@
 {# templates/emails/_tabla_prestamos.html #}
-{% load prestamos_extras %}
+{% load i18n prestamos_extras %}
 <table role="presentation" width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;">
   <tr>
-    <th align="left" style="border-bottom:2px solid #1a4d8f;">Libro</th>
-    <th align="left" style="border-bottom:2px solid #1a4d8f;">Devolver antes del</th>
-    <th align="right" style="border-bottom:2px solid #1a4d8f;">Días</th>
+    <th align="left" style="border-bottom:2px solid #1a4d8f;">{% translate "Libro" %}</th>
+    <th align="left" style="border-bottom:2px solid #1a4d8f;">{% translate "Devolver antes del" %}</th>
+    <th align="right" style="border-bottom:2px solid #1a4d8f;">{% translate "Días" %}</th>
   </tr>
   {% for p in prestamos %}
   <tr>

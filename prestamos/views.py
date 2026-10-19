@@ -2,6 +2,7 @@ from django.core import signing
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_http_methods
 
 from . import services
@@ -28,12 +29,12 @@ def renovar(request, token):
     try:
         datos = signing.loads(token, salt=SALT_RENOVACION, max_age=VALIDEZ_RENOVACION)
     except signing.SignatureExpired:
-        return JsonResponse({"error": "El enlace ha caducado"}, status=410)
+        return JsonResponse({"error": _("El enlace ha caducado")}, status=410)
     except signing.BadSignature:
-        return JsonResponse({"error": "Enlace no válido"}, status=400)
+        return JsonResponse({"error": _("Enlace no válido")}, status=400)
     prestamo = get_object_or_404(Prestamo, pk=datos["p"])
     if int(prestamo.fecha_limite.timestamp()) != datos["f"]:
-        return JsonResponse({"error": "Este enlace ya se ha usado"}, status=410)
+        return JsonResponse({"error": _("Este enlace ya se ha usado")}, status=410)
     if request.method == "GET":  # la página de confirmación lo muestra con un botón
         return JsonResponse(
             {
@@ -62,7 +63,8 @@ def prestamo_a_dict(p: Prestamo) -> dict:
         "libro": p.ejemplar.libro.titulo,
         "socio": str(p.socio),
         "fecha_limite": p.fecha_limite.isoformat(),
-        "estado": p.estado,
+        "estado": p.estado,  # el valor, estable: Angular decide qué mostrar…
+        "estado_texto": p.get_estado_display(),  # …o usa este, ya traducido (módulo 28)
     }
 
 

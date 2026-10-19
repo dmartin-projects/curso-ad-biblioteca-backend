@@ -3,6 +3,7 @@ from django.db import transaction
 from django.db.models import DecimalField, Prefetch, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from catalogo.models import Ejemplar
 from usuarios.models import PerfilSocio, Usuario
@@ -49,11 +50,13 @@ def prestar(ejemplar_id: int, socio) -> Prestamo:
     perfil = PerfilSocio.objects.select_for_update().get(usuario=socio)
     if Prestamo.objects.activos().filter(socio=socio).count() >= perfil.max_prestamos:
         raise LimitePrestamosAlcanzado(
-            f"Ya tienes {perfil.max_prestamos} préstamos activos, el máximo."
+            _("Ya tienes %(n)s préstamos activos, el máximo.") % {"n": perfil.max_prestamos}
         )
     ejemplar = Ejemplar.objects.select_for_update().get(pk=ejemplar_id)
     if ejemplar.estado != Ejemplar.Estado.DISPONIBLE:
-        raise EjemplarNoDisponible(f"El ejemplar {ejemplar.codigo} no está disponible")
+        raise EjemplarNoDisponible(
+            _("El ejemplar %(codigo)s no está disponible") % {"codigo": ejemplar.codigo}
+        )
 
     prestamo = Prestamo.objects.create(
         ejemplar=ejemplar,
@@ -94,9 +97,9 @@ def renovar(prestamo: Prestamo) -> Prestamo:
     """Amplía el plazo DURACION días. Solo préstamos activos y que aún no han vencido."""
     prestamo = Prestamo.objects.select_for_update().get(pk=prestamo.pk)
     if prestamo.estado != Prestamo.Estado.ACTIVO:
-        raise PrestamoNoRenovable("Solo se renuevan préstamos activos.")
+        raise PrestamoNoRenovable(_("Solo se renuevan préstamos activos."))
     if prestamo.fecha_limite < timezone.now():
-        raise PrestamoNoRenovable("Un préstamo vencido no se renueva: devuélvelo.")
+        raise PrestamoNoRenovable(_("Un préstamo vencido no se renueva: devuélvelo."))
     prestamo.fecha_limite += Prestamo.DURACION
     prestamo.save(update_fields=["fecha_limite"])
     return prestamo

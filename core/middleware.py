@@ -4,10 +4,13 @@ import logging
 import re
 import time
 import uuid
+import zoneinfo
 
 from asgiref.sync import iscoroutinefunction, markcoroutinefunction
 from django.core.cache import cache
 from django.http import JsonResponse
+from django.utils import timezone
+from django.utils.translation import gettext as _
 
 request_id_var = contextvars.ContextVar("request_id", default="-")
 ID_VALIDO = re.compile(r"^[A-Za-z0-9-]{1,64}$")
@@ -67,7 +70,7 @@ class MantenimientoMiddleware:
     def __call__(self, request):
         if cache.get("modo_mantenimiento") and not request.path.startswith(self.RUTAS_LIBRES):
             return JsonResponse(
-                {"detail": "En mantenimiento"}, status=503, headers={"Retry-After": "300"}
+                {"detail": _("En mantenimiento")}, status=503, headers={"Retry-After": "300"}
             )
         return self.get_response(request)
 
@@ -93,3 +96,16 @@ class PeticionesLentasMiddleware:
                 getattr(request, "id", "-"),
             )
         return response
+
+
+# ── módulo 28: la zona horaria del usuario ──
+def zona_horaria_middleware(get_response):
+    def middleware(request):
+        zona = request.headers.get("X-Timezone") or getattr(request.user, "zona_horaria", None)
+        try:
+            timezone.activate(zoneinfo.ZoneInfo(zona)) if zona else timezone.deactivate()
+        except (zoneinfo.ZoneInfoNotFoundError, ValueError):  # ValueError: "../etc" y similares
+            timezone.deactivate()
+        return get_response(request)
+
+    return middleware

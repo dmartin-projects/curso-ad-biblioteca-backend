@@ -8,6 +8,7 @@ from django.contrib.postgres.fields import DateTimeRangeField, RangeOperators
 from django.db import models
 from django.db.models.functions import Now
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from core.models import ModeloConFechas
 
@@ -30,19 +31,25 @@ class PrestamoManager(models.Manager.from_queryset(PrestamoQuerySet)):
 
 class Prestamo(ModeloConFechas):
     class Estado(models.TextChoices):
-        ACTIVO = "activo", "Activo"
-        DEVUELTO = "devuelto", "Devuelto"
+        ACTIVO = "activo", _("Activo")
+        DEVUELTO = "devuelto", _("Devuelto")
 
     ejemplar = models.ForeignKey(
-        "catalogo.Ejemplar", on_delete=models.PROTECT, related_name="prestamos"
+        "catalogo.Ejemplar",
+        on_delete=models.PROTECT,
+        related_name="prestamos",
+        verbose_name=_("ejemplar"),
     )
     socio = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="prestamos"
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="prestamos",
+        verbose_name=_("socio"),
     )
-    fecha_inicio = models.DateTimeField(db_default=Now())
-    fecha_limite = models.DateTimeField()
-    fecha_devolucion = models.DateTimeField(null=True, blank=True)
-    estado = models.CharField(max_length=10, choices=Estado, default=Estado.ACTIVO)
+    fecha_inicio = models.DateTimeField(_("fecha de inicio"), db_default=Now())
+    fecha_limite = models.DateTimeField(_("fecha límite"))
+    fecha_devolucion = models.DateTimeField(_("fecha de devolución"), null=True, blank=True)
+    estado = models.CharField(_("estado"), max_length=10, choices=Estado, default=Estado.ACTIVO)
     notas = GenericRelation("core.Nota", related_query_name="prestamo")
 
     DURACION = timedelta(days=21)
@@ -50,6 +57,8 @@ class Prestamo(ModeloConFechas):
     objects = PrestamoManager()
 
     class Meta:
+        verbose_name = _("préstamo")
+        verbose_name_plural = _("préstamos")
         ordering = ["-fecha_inicio"]
         permissions = [
             ("renovar_prestamo", "Puede renovar préstamos"),

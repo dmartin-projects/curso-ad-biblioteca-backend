@@ -4,6 +4,8 @@ from email.headerregistry import Address
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+from django.utils import translation
+from django.utils.translation import gettext as _
 
 from .pdf import recibo_multa_pdf
 
@@ -15,14 +17,17 @@ def destinatario(usuario) -> Address:
 
 def crear_recordatorio(socio, prestamos) -> EmailMultiAlternatives:
     contexto = {"socio": socio, "prestamos": prestamos, "site_url": settings.SITE_URL}
-    mensaje = EmailMultiAlternatives(
-        subject="Tus préstamos vencen pronto",
-        body=render_to_string("emails/recordatorio.txt", contexto),
-        to=[destinatario(socio)],
-        reply_to=["biblioteca@biblioteca.example"],
-        headers={"List-Unsubscribe": "<mailto:baja@biblioteca.example>"},
-    )
-    mensaje.attach_alternative(render_to_string("emails/recordatorio.html", contexto), "text/html")
+    # En una tarea no hay petición ni idioma activo: el del destinatario (módulo 28)
+    with translation.override(getattr(socio, "idioma", None) or settings.LANGUAGE_CODE):
+        mensaje = EmailMultiAlternatives(
+            subject=_("Tus préstamos vencen pronto"),
+            body=render_to_string("emails/recordatorio.txt", contexto),
+            to=[destinatario(socio)],
+            reply_to=["biblioteca@biblioteca.example"],
+            headers={"List-Unsubscribe": "<mailto:baja@biblioteca.example>"},
+        )
+        html = render_to_string("emails/recordatorio.html", contexto)
+    mensaje.attach_alternative(html, "text/html")
     return mensaje
 
 

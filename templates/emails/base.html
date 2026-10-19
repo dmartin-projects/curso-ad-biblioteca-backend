@@ -1,6 +1,7 @@
 {# templates/emails/base.html #}
+{% load i18n %}{% get_current_language as IDIOMA %}
 <!doctype html>
-<html lang="es">
+<html lang="{{ IDIOMA }}">
 <body style="margin:0; padding:0; background:#f4f4f4; font-family: Arial, sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
     <tr><td align="center" style="padding:24px;">
@@ -9,7 +10,7 @@
           <h1 style="color:#1a4d8f; font-size:22px; margin:0 0 16px;">Biblioteca</h1>
           {% block contenido %}{% endblock %}
           <hr style="border:none; border-top:1px solid #dddddd; margin:24px 0;">
-          {% block pie %}<small style="color:#777777;">Este email se ha enviado automáticamente.</small>{% endblock %}
+          {% block pie %}<small style="color:#777777;">{% translate "Este email se ha enviado automáticamente." %}</small>{% endblock %}
         </td></tr>
       </table>
     </td></tr>
