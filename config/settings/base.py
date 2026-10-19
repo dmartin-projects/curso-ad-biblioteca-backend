@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import environ
+from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent  # .../backend
 
@@ -22,13 +23,14 @@ DJANGO_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.postgres",
 ]
-THIRD_PARTY_APPS = ["channels"]
+THIRD_PARTY_APPS = ["channels", "django_tasks_db"]
 LOCAL_APPS = [
     "core",
     "usuarios",
     "catalogo",
     "prestamos",
     "notificaciones",
+    "tickets",
 ]
 # daphne el primero: runserver pasa a ser ASGI (módulo 25)
 INSTALLED_APPS = ["daphne", *DJANGO_APPS, *THIRD_PARTY_APPS, *LOCAL_APPS]
@@ -170,3 +172,45 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"  # lee de Redis, p
 MAILERS = {"default": {"BACKEND": "django.core.mail.backends.console.EmailBackend"}}
 DEFAULT_FROM_EMAIL = '"Biblioteca" <no-responder@biblioteca.example>'
 SERVER_EMAIL = "errores@biblioteca.example"
+
+
+# ── Tareas (módulo 26) ──
+# django.tasks: emails sencillos, cola en PostgreSQL (manage.py db_worker)
+TASKS = {
+    "default": {
+        "BACKEND": "django_tasks_db.DatabaseBackend",
+        "QUEUES": ["default", "emails"],
+    },
+}
+
+# Celery: RabbitMQ como broker, Redis para resultados
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="amqp://guest:guest@localhost:5672//")
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://localhost:6379/0")
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_ACKS_LATE = True
+CELERY_TASK_REJECT_ON_WORKER_LOST = True
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_TASK_TIME_LIMIT = 300
+CELERY_TASK_SOFT_TIME_LIMIT = 270
+CELERY_RESULT_EXPIRES = 60 * 60 * 24
+CELERY_TASK_TRACK_STARTED = True
+CELERY_WORKER_SEND_TASK_EVENTS = True  # sin eventos, Flower ve los workers pero no las tareas
+CELERY_TASK_SEND_SENT_EVENT = True
+CELERY_TASK_DEFAULT_QUEUE = "default"
+CELERY_TASK_ROUTES = {
+    "*.tasks.enviar_*": {"queue": "emails"},
+    "tickets.tasks.*": {"queue": "ocr"},
+}
+CELERY_BEAT_SCHEDULE = {
+    "calcular-multas": {
+        "task": "prestamos.tasks.calcular_multas",
+        "schedule": crontab(hour=1, minute=30),  # cada noche
+    },
+    "recordatorios-diarios": {
+        "task": "prestamos.tasks.enviar_recordatorios_vencimiento",
+        "schedule": crontab(hour=9, minute=0),
+    },
+}

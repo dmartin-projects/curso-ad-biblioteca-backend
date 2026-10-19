@@ -42,3 +42,16 @@ def enviar_recibo_multa(multa) -> None:
     )
     mensaje.attach(f"recibo-{multa.pk}.pdf", recibo_multa_pdf(multa), "application/pdf")
     mensaje.send()
+
+
+def enviar_confirmacion(prestamo) -> None:
+    """Módulo 26: lo envía una tarea de django.tasks, nunca la petición."""
+    EmailMultiAlternatives(
+        subject=f"Préstamo confirmado: {prestamo.ejemplar.libro.titulo}",
+        body=(
+            f"Hola {prestamo.socio.get_short_name()}:\n\n"
+            f"Te has llevado «{prestamo.ejemplar.libro.titulo}». "
+            f"Devuélvelo antes del {prestamo.fecha_limite:%d/%m/%Y}.\n\nBiblioteca"
+        ),
+        to=[destinatario(prestamo.socio)],
+    ).send()

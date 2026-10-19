@@ -9,3 +9,14 @@ def cache_limpia():
     cache.clear()
     yield
     cache.clear()
+
+
+@pytest.fixture
+def celery_sin_propagar(settings):
+    """Para probar reintentos en modo eager (módulo 26).
+
+    Con CELERY_TASK_EAGER_PROPAGATES, el primer self.retry() sale como excepción Retry.
+    Sin propagar, apply() encadena los reintentos en el momento (sin esperar el backoff).
+    Celery lee los CELERY_* de los settings de Django al consultarlos: basta con cambiarlos aquí.
+    """
+    settings.CELERY_TASK_EAGER_PROPAGATES = False

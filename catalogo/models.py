@@ -172,3 +172,25 @@ class Ejemplar(ModeloConFechas):
 
     def __str__(self):
         return f"{self.codigo} · {self.libro}"
+
+
+class Importacion(models.Model):
+    """Resumen de una importación en lotes con Celery (módulo 26)."""
+
+    class Estado(models.TextChoices):
+        EN_CURSO = "en_curso", "En curso"
+        TERMINADA = "terminada", "Terminada"
+
+    estado = models.CharField(max_length=10, choices=Estado, default=Estado.EN_CURSO)
+    lotes = models.PositiveIntegerField(default=0)
+    creados = models.PositiveIntegerField(default=0)
+    existentes = models.PositiveIntegerField(default=0)
+    errores = models.JSONField(default=list, blank=True)
+    creada = models.DateTimeField(auto_now_add=True)
+    terminada = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name_plural = "importaciones"
+
+    def __str__(self):
+        return f"Importación {self.pk} ({self.estado})"

@@ -8,6 +8,7 @@ from catalogo.models import Ejemplar
 from usuarios.models import PerfilSocio, Usuario
 
 from .models import Prestamo
+from .tasks import enviar_confirmacion_prestamo
 
 
 class EjemplarNoDisponible(Exception):
@@ -62,7 +63,8 @@ def prestar(ejemplar_id: int, socio) -> Prestamo:
     ejemplar.estado = Ejemplar.Estado.PRESTADO
     ejemplar.save(update_fields=["estado"])
 
-    transaction.on_commit(lambda: print(f"Préstamo {prestamo.pk} confirmado"))
+    # módulo 26: el email sale en segundo plano, y solo si el préstamo llega a confirmarse
+    transaction.on_commit(lambda: enviar_confirmacion_prestamo.enqueue(prestamo.pk))
     return prestamo
 
 

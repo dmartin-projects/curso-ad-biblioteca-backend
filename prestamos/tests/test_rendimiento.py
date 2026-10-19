@@ -83,13 +83,14 @@ def test_fetch_raise_no_encuentra_cargas_perezosas():
                 p.ejemplar  # noqa: B018
 
 
-def test_prestar(django_capture_on_commit_callbacks, capsys):
+def test_prestar(django_capture_on_commit_callbacks, mailoutbox):
     libro = Libro.objects.create(titulo="Dune", isbn="9788497593793")
     ejemplar = Ejemplar.objects.create(libro=libro, codigo="D1")
     socio = Usuario.objects.create_user("ana@example.com")
     with django_capture_on_commit_callbacks(execute=True):
-        prestamo = prestar(ejemplar.pk, socio)
-    assert f"Préstamo {prestamo.pk} confirmado" in capsys.readouterr().out
+        prestar(ejemplar.pk, socio)
+    # módulo 26: el print se convirtió en un email encolado (ImmediateBackend en tests)
+    assert mailoutbox[0].subject == "Préstamo confirmado: Dune"
     ejemplar.refresh_from_db()
     assert ejemplar.estado == Ejemplar.Estado.PRESTADO
     with pytest.raises(EjemplarNoDisponible):
