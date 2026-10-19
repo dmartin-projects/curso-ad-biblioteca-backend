@@ -45,7 +45,10 @@ def datos():
     hobbit = Libro.objects.create(titulo="El hobbit", isbn="9788445073728")  # "le" no está
     hobbit.autores.add(tolkien)
     hobbit.generos.add(fantasia)
-    ana, luis = Usuario.objects.create_user("ana"), Usuario.objects.create_user("luis")
+    ana, luis = (
+        Usuario.objects.create_user("ana@example.com"),
+        Usuario.objects.create_user("luis@example.com"),
+    )
     ejemplares = {
         "D1": Ejemplar.objects.create(libro=dune, codigo="D1"),
         "D2": Ejemplar.objects.create(libro=dune, codigo="D2"),
@@ -92,7 +95,7 @@ def test_2_libros_por_genero(datos):
 
 def test_3_socios_con_mas_de_2_activos(datos):
     qs = Usuario.objects.annotate(activos=Count("prestamos", filter=Q(prestamos__estado="activo")))
-    assert list(qs.filter(activos__gt=2).values_list("username", flat=True)) == ["ana"]
+    assert list(qs.filter(activos__gt=2).values_list("pk", flat=True)) == [datos["ana"].pk]
 
 
 def test_4_ejemplares_prestamos_disponible(datos):
@@ -133,7 +136,10 @@ def test_7_ultimo_prestamo_de_cada_socio(datos):
     qs = Prestamo.objects.annotate(
         orden=Window(RowNumber(), partition_by=F("socio"), order_by=F("fecha_inicio").desc()),
     ).filter(orden=1)
-    assert {(p.socio.username, p.ejemplar.codigo) for p in qs} == {("ana", "D3"), ("luis", "D1")}
+    assert {(str(p.socio), p.ejemplar.codigo) for p in qs} == {
+        ("ana@example.com", "D3"),
+        ("luis@example.com", "D1"),
+    }
 
 
 def test_subquery_count_de_la_seccion_8(datos):

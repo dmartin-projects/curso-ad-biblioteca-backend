@@ -9,5 +9,6 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("health/", views.health, name="health"),
     path("catalogo/", include("catalogo.urls")),
+    path("cuentas/", include("django.contrib.auth.urls")),
     path("libros/", RedirectView.as_view(pattern_name="catalogo:lista_libros")),
 ]

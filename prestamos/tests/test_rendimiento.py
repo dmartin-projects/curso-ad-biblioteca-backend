@@ -22,7 +22,7 @@ pytestmark = pytest.mark.django_db
 def crear_socios(n):
     libro = Libro.objects.create(titulo=f"Libro {n}", isbn=f"97884{n:08d}")
     for i in range(n):
-        socio = Usuario.objects.create_user(f"socio{n}-{i}", email=f"s{n}-{i}@example.com")
+        socio = Usuario.objects.create_user(f"s{n}-{i}@example.com")
         for j in range(2):
             e = Ejemplar.objects.create(libro=libro, codigo=f"{n}-{i}-{j}")
             p = Prestamo.objects.create(
@@ -86,7 +86,7 @@ def test_fetch_raise_no_encuentra_cargas_perezosas():
 def test_prestar(django_capture_on_commit_callbacks, capsys):
     libro = Libro.objects.create(titulo="Dune", isbn="9788497593793")
     ejemplar = Ejemplar.objects.create(libro=libro, codigo="D1")
-    socio = Usuario.objects.create_user("ana")
+    socio = Usuario.objects.create_user("ana@example.com")
     with django_capture_on_commit_callbacks(execute=True):
         prestamo = prestar(ejemplar.pk, socio)
     assert f"Préstamo {prestamo.pk} confirmado" in capsys.readouterr().out

@@ -43,8 +43,8 @@ def test_libro_queryset_encadenable(biblioteca):
 
 def test_prestamo_manager(biblioteca):
     dune, _ = biblioteca
-    ana = Usuario.objects.create_user("ana")
-    luis = Usuario.objects.create_user("luis")
+    ana = Usuario.objects.create_user("ana@example.com")
+    luis = Usuario.objects.create_user("luis@example.com")
     ejemplar = dune.ejemplares.get()
     ahora = timezone.now()
     vencido = Prestamo.objects.create(
@@ -69,7 +69,7 @@ def test_prestamo_manager(biblioteca):
     # el manager ya trae libro y socio en la misma consulta
     with CaptureQueriesContext(connection) as consultas:
         p = Prestamo.objects.get(pk=vencido.pk)
-        assert (p.ejemplar.libro.titulo, p.socio.username) == ("Dune", "ana")
+        assert (p.ejemplar.libro.titulo, str(p.socio)) == ("Dune", "ana@example.com")
     assert len(consultas) == 1
 
 
@@ -83,7 +83,7 @@ def test_lookup_ne_y_transformacion(biblioteca):
 def test_resumen_mensual_sql_y_orm_coinciden(biblioteca):
     dune, _ = biblioteca
     ejemplar = dune.ejemplares.get()
-    socio = Usuario.objects.create_user("ana")
+    socio = Usuario.objects.create_user("ana@example.com")
     for mes, cantidad in [(1, 2), (2, 1), (4, 3)]:
         for _ in range(cantidad):
             inicio = datetime(2026, mes, 10, tzinfo=UTC)

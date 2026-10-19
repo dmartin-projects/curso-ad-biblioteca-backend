@@ -90,3 +90,20 @@ MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # Desde Django 6.0 el valor por defecto ya es BigAutoField; no hace falta declararlo.
+
+# ── Autenticación (módulo 12) ──
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.Argon2PasswordHasher",  # el preferido
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",  # los que ya existían se leen y se actualizan al entrar
+]
+AUTHENTICATION_BACKENDS = [
+    "usuarios.backends.EmailONumeroSocioBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"
+PASSWORD_RESET_TIMEOUT = 60 * 60 * 24
+
+# Emails: de momento se imprimen en la consola de runserver (módulo 22: Mailpit y SMTP)
+MAILERS = {"default": {"BACKEND": "django.core.mail.backends.console.EmailBackend"}}

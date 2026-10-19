@@ -77,7 +77,7 @@ def test_autocompletar_tolera_erratas_y_acentos(client):
 
 def test_reservas_solapadas_de_la_misma_sala():
     sala, otra = Sala.objects.create(nombre="Estudio 1"), Sala.objects.create(nombre="Estudio 2")
-    socio = Usuario.objects.create_user("ana")
+    socio = Usuario.objects.create_user("ana@example.com")
     t = datetime(2026, 11, 3, 10, tzinfo=ZoneInfo("Europe/Madrid"))
     ReservaSala.objects.create(sala=sala, socio=socio, periodo=(t, t + timedelta(hours=2)))
     # otra sala a la misma hora, o la misma sala justo después: sin problema

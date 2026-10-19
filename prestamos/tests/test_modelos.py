@@ -20,7 +20,7 @@ def ejemplar():
 
 @pytest.fixture
 def socio():
-    return Usuario.objects.create_user("ana", password="x")
+    return Usuario.objects.create_user("ana@example.com", password="x")
 
 
 def test_un_solo_prestamo_activo_por_ejemplar(ejemplar, socio):
