@@ -11,6 +11,7 @@ from . import views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("api/<str:version>/", include("config.api_urls")),  # módulo 32
     path("health/", views.health, name="health"),
     path("health/live/", core_views.health_live, name="health_live"),
     path("health/ready/", core_views.health_ready, name="health_ready"),

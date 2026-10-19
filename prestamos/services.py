@@ -8,7 +8,8 @@ from django.utils.translation import gettext as _
 from catalogo.models import Ejemplar
 from usuarios.models import PerfilSocio, Usuario
 
-from .models import Prestamo
+from .models import Multa, Prestamo
+from .multas import importe_multa
 from .tasks import enviar_confirmacion_prestamo
 
 
@@ -75,8 +76,17 @@ def prestar(ejemplar_id: int, socio) -> Prestamo:
 from .signals import prestamo_devuelto, prestamo_vencido  # noqa: E402
 
 
+class PrestamoYaDevuelto(Exception):
+    pass
+
+
 @transaction.atomic
 def devolver(prestamo: Prestamo) -> Prestamo:
+    # select_for_update: dos devoluciones simultáneas no pueden pasar las dos la comprobación
+    prestamo = Prestamo.objects.select_for_update().get(pk=prestamo.pk)
+    if prestamo.estado == Prestamo.Estado.DEVUELTO:
+        raise PrestamoYaDevuelto(prestamo.pk)
+
     prestamo.estado = Prestamo.Estado.DEVUELTO
     prestamo.fecha_devolucion = timezone.now()
     prestamo.save(update_fields=["estado", "fecha_devolucion"])
@@ -84,6 +94,12 @@ def devolver(prestamo: Prestamo) -> Prestamo:
     ejemplar = prestamo.ejemplar
     ejemplar.estado = Ejemplar.Estado.DISPONIBLE
     ejemplar.save(update_fields=["estado"])
+
+    if importe := importe_multa(prestamo.fecha_limite, prestamo.fecha_devolucion):
+        # puede que la tarea nocturna ya la creara: se actualiza (si no está pagada), no se duplica
+        Multa.objects.filter(prestamo=prestamo, pagada=False).update(importe_base=importe)
+        Multa.objects.get_or_create(prestamo=prestamo, defaults={"importe_base": importe})
+
     prestamo_devuelto.send(sender=Prestamo, prestamo=prestamo)
     return prestamo
 

@@ -25,7 +25,14 @@ DJANGO_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.postgres",
 ]
-THIRD_PARTY_APPS = ["channels", "django_tasks_db", "corsheaders"]
+THIRD_PARTY_APPS = [
+    "channels",
+    "django_tasks_db",
+    "corsheaders",
+    "rest_framework",
+    "django_filters",
+    "drf_spectacular",
+]
 LOCAL_APPS = [
     "core",
     "usuarios",
@@ -182,6 +189,28 @@ MAILERS = {"default": {"BACKEND": "django.core.mail.backends.console.EmailBacken
 DEFAULT_FROM_EMAIL = '"Biblioteca" <no-responder@biblioteca.example>'
 SERVER_EMAIL = "errores@biblioteca.example"
 
+
+# ── API (módulo 32) ──
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",  # API navegable / admin
+        # JWT en el módulo 35
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",  # ✅ cerrado por defecto
+    ],
+    "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.MultiPartParser",
+    ],
+    "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
+    "DEFAULT_VERSION": "v1",
+    "ALLOWED_VERSIONS": ["v1"],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "COERCE_DECIMAL_TO_STRING": True,
+    "TEST_REQUEST_DEFAULT_FORMAT": "json",
+}
 
 # ── Seguridad (módulo 29) ──
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:4200"])

@@ -1,7 +1,6 @@
 # prestamos/tasks.py
 import logging
 from datetime import timedelta
-from decimal import Decimal
 from smtplib import SMTPException
 
 from celery import shared_task
@@ -11,10 +10,9 @@ from django.utils import timezone
 from .emails import enviar_confirmacion
 from .emails import enviar_recordatorio as componer_y_enviar_recordatorio
 from .models import Multa, Prestamo
+from .multas import importe_multa
 
 logger = logging.getLogger(__name__)
-
-MULTA_POR_DIA = Decimal("0.50")
 
 
 # ── Parte A: django.tasks (cola en la BD, manage.py db_worker) ──
@@ -61,12 +59,12 @@ def calcular_multas() -> int:
     ahora = timezone.now()
     n = 0
     for prestamo in Prestamo.objects.vencidos().select_related(None).only("pk", "fecha_limite"):
-        dias = max((ahora - prestamo.fecha_limite).days, 1)
+        importe = importe_multa(prestamo.fecha_limite, ahora)  # la misma regla que devolver()
         multa, creada = Multa.objects.get_or_create(
-            prestamo=prestamo, defaults={"importe_base": dias * MULTA_POR_DIA}
+            prestamo=prestamo, defaults={"importe_base": importe}
         )
         if not creada and not multa.pagada:
-            multa.importe_base = dias * MULTA_POR_DIA  # crece cada día hasta que la paga
+            multa.importe_base = importe  # crece cada día hasta que la paga
             multa.save(update_fields=["importe_base"])
         n += 1
     return n

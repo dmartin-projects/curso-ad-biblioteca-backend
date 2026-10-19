@@ -25,11 +25,11 @@ msgstr "The ISBN must have 13 digits."
 msgid "El dígito de control del ISBN no es válido."
 msgstr "The ISBN check digit is not valid."
 
-#: config/settings/base.py:108
+#: config/settings/base.py:119
 msgid "Español"
 msgstr "Spanish"
 
-#: config/settings/base.py:108
+#: config/settings/base.py:119
 msgid "Inglés"
 msgstr "English"
 
@@ -45,6 +45,10 @@ msgstr "The file exceeds %(megas)s MB."
 #: core/validators.py:28
 msgid "El archivo no es un PDF válido."
 msgstr "The file is not a valid PDF."
+
+#: prestamos/api/views.py:25
+msgid "El préstamo ya estaba devuelto."
+msgstr "The loan had already been returned."
 
 #: prestamos/emails.py:23
 msgid "Tus préstamos vencen pronto"
@@ -90,7 +94,7 @@ msgstr "loan"
 msgid "préstamos"
 msgstr "loans"
 
-#: prestamos/services.py:48
+#: prestamos/services.py:49
 #, python-format
 msgid "El ejemplar %(codigo)s no está disponible"
 msgstr "Copy %(codigo)s is not available"

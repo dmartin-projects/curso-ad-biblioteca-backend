@@ -22,3 +22,9 @@ if env.bool("USAR_MAILPIT", default=False):  # noqa: F405
             "OPTIONS": {"host": "localhost", "port": 1025, "timeout": 5},
         }
     }
+
+# La API navegable, solo en desarrollo (módulo 32)
+REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [  # noqa: F405
+    "rest_framework.renderers.JSONRenderer",
+    "rest_framework.renderers.BrowsableAPIRenderer",
+]
