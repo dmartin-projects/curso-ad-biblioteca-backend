@@ -1,4 +1,5 @@
-from django.db.models.signals import m2m_changed, post_save
+from django.db import transaction
+from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
 
 from .busqueda import actualizar_busqueda
@@ -29,3 +30,33 @@ def autor_guardado(sender, instance, created, raw, **kwargs):
         return
     for libro_id in instance.libros.values_list("pk", flat=True):  # su nombre está en el vector
         actualizar_busqueda(libro_id)
+
+
+# ── módulo 20: no dejar archivos huérfanos en el almacenamiento ──
+CAMPOS_ARCHIVO = ("portada", "ficha_pdf")
+
+
+@receiver(pre_save, sender=Libro, dispatch_uid="libro_archivos_anteriores")
+def guardar_archivos_anteriores(sender, instance, raw, **kwargs):
+    instance._archivos_anteriores = {}
+    if instance.pk and not raw:
+        fila = sender.objects.filter(pk=instance.pk).values(*CAMPOS_ARCHIVO).first()
+        instance._archivos_anteriores = fila or {}
+
+
+@receiver(post_save, sender=Libro, dispatch_uid="libro_borrar_archivos_reemplazados")
+def borrar_archivos_reemplazados(sender, instance, **kwargs):
+    for campo, anterior in getattr(instance, "_archivos_anteriores", {}).items():
+        archivo = getattr(instance, campo)
+        if anterior and anterior != archivo.name:
+            storage = archivo.storage
+            # on_commit: si la transacción se deshace, el archivo antiguo sigue haciendo falta
+            transaction.on_commit(lambda s=storage, n=anterior: s.delete(n))
+
+
+@receiver(post_delete, sender=Libro, dispatch_uid="libro_borrar_archivos")
+def borrar_archivos(sender, instance, **kwargs):
+    for campo in CAMPOS_ARCHIVO:
+        archivo = getattr(instance, campo)
+        if archivo:
+            transaction.on_commit(lambda s=archivo.storage, n=archivo.name: s.delete(n))

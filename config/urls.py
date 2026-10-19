@@ -1,4 +1,6 @@
 # config/urls.py
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import RedirectView
@@ -16,6 +18,9 @@ urlpatterns = [
     path("cuentas/", include("django.contrib.auth.urls")),
     path("libros/", RedirectView.as_view(pattern_name="catalogo:lista_libros")),
 ]
+
+if settings.DEBUG:  # solo en desarrollo y con FileSystemStorage
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 admin.site.site_header = "Biblioteca · Administración"
 admin.site.site_title = "Biblioteca"

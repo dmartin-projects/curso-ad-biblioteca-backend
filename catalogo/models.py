@@ -1,16 +1,27 @@
 # catalogo/models.py
+import uuid
+from pathlib import Path
+
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex, OpClass
 from django.contrib.postgres.search import SearchVectorField
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.db.models import Count, Exists, OuterRef, Q
 from django.db.models.functions import Lower
 from django.urls import reverse
 
 from core.models import ModeloConFechas
+from core.validators import TamanoMaximoValidator, validar_pdf_real
 
 from .fields import ISBNField
+
+
+def ruta_portada(instance, filename: str) -> str:
+    # Nunca uses el nombre original: puede colisionar o contener caracteres peligrosos
+    extension = Path(filename).suffix.lower()
+    return f"portadas/{instance.isbn}/{uuid.uuid4().hex}{extension}"
 
 
 class Autor(ModeloConFechas):
@@ -85,6 +96,19 @@ class Libro(ModeloConFechas):
     paginas = models.PositiveIntegerField(null=True, blank=True)
     sinopsis = models.TextField(blank=True)
     notas = GenericRelation("core.Nota", related_query_name="libro")
+    portada = models.ImageField(
+        upload_to=ruta_portada,
+        blank=True,
+        validators=[
+            FileExtensionValidator(["jpg", "jpeg", "png", "webp"]),
+            TamanoMaximoValidator(2),
+        ],
+    )
+    ficha_pdf = models.FileField(
+        upload_to="fichas/%Y/%m/",
+        blank=True,
+        validators=[FileExtensionValidator(["pdf"]), TamanoMaximoValidator(5), validar_pdf_real],
+    )
     metadatos = models.JSONField(default=dict, blank=True)
     etiquetas = ArrayField(models.CharField(max_length=50), default=list, blank=True)
     busqueda = SearchVectorField(null=True, editable=False)

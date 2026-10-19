@@ -1,7 +1,7 @@
 # catalogo/urls.py
 from django.urls import path, register_converter
 
-from . import converters, views
+from . import archivos, converters, views
 
 register_converter(converters.ISBNConverter, "isbn")
 register_converter(converters.AnioConverter, "anio")
@@ -17,6 +17,11 @@ urlpatterns = [
     path("libros/isbn/<isbn:isbn>/", views.libro_por_isbn, name="libro_por_isbn"),
     path("libros/anio/<anio:anio>/", views.libros_por_anio, name="libros_por_anio"),
     path("libros/<int:pk>/", views.detalle_libro, name="detalle_libro"),
+    # módulo 20: archivos
+    path("libros/<int:pk>/portada/", archivos.subir_portada, name="subir_portada"),
+    path("libros/<int:pk>/ficha/", archivos.subir_ficha, name="subir_ficha"),
+    path("libros/<int:pk>/ficha/descargar/", archivos.descargar_ficha, name="descargar_ficha"),
+    path("prestamos/exportar/", archivos.exportar_prestamos, name="exportar_prestamos"),
     path("autores/<slug:slug>/", views.detalle_autor, name="detalle_autor"),
     # módulo 04: las versiones CBV
     path("v2/libros/", views.LibroListJSON.as_view(), name="lista_libros_cbv"),

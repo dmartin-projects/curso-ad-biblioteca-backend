@@ -36,6 +36,7 @@ MIDDLEWARE = [
     "core.middleware.RequestIdMiddleware",  # lo primero: el id existe para todo lo demás
     "core.middleware.TiempoRespuestaMiddleware",  # y mide la petición completa
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # justo después de Security
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -93,6 +94,30 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+# ── Archivos (módulo 20) ──
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "bucket_name": env("S3_BUCKET", default="biblioteca"),
+            "endpoint_url": env("S3_ENDPOINT_URL", default="http://localhost:9000"),
+            "access_key": env("S3_ACCESS_KEY", default="minio"),
+            "secret_key": env("S3_SECRET_KEY", default="minio12345"),
+            "region_name": "us-east-1",
+            "signature_version": "s3v4",  # firma v4: la v2 está obsoleta
+            "default_acl": None,
+            "querystring_auth": True,
+            "querystring_expire": 300,
+            "file_overwrite": False,
+        },
+    },
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
+CORS_MEDIA_ORIGENES = env.list("CORS_MEDIA_ORIGENES", default=["http://localhost:4200"])
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 2_621_440
+DATA_UPLOAD_MAX_NUMBER_FILES = 20
 
 # Desde Django 6.0 el valor por defecto ya es BigAutoField; no hace falta declararlo.
 
