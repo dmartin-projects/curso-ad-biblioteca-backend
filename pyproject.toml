@@ -8,6 +8,7 @@ dependencies = [
     "django[argon2]>=6.1,<6.2",
     "django-environ>=0.14.0",
     "psycopg[binary]>=3.3.6",
+    "rules>=3.5",
 ]
 
 [dependency-groups]

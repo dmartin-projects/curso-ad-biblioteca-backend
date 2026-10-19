@@ -47,3 +47,64 @@ def renovar(request, token):
     except services.PrestamoNoRenovable as error:
         return JsonResponse({"error": str(error)}, status=409)
     return JsonResponse({"nueva_fecha_limite": prestamo.fecha_limite.isoformat()})
+
+
+# ── Módulo 14: permisos globales y por objeto ──
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin  # noqa: E402
+from django.views import View  # noqa: E402
+from django.views.generic.detail import BaseDetailView, SingleObjectMixin  # noqa: E402
+from django.views.generic.list import BaseListView  # noqa: E402
+
+
+def prestamo_a_dict(p: Prestamo) -> dict:
+    return {
+        "id": p.pk,
+        "libro": p.ejemplar.libro.titulo,
+        "socio": str(p.socio),
+        "fecha_limite": p.fecha_limite.isoformat(),
+        "estado": p.estado,
+    }
+
+
+class PrestamosVisiblesMixin(LoginRequiredMixin):
+    """Filtra SIEMPRE por rol: el detalle de un préstamo ajeno da 404 y el listado no lo incluye."""
+
+    raise_exception = True  # API: 403 en vez de redirigir al login
+
+    def get_queryset(self):
+        qs = Prestamo.objects.all()  # el manager ya hace select_related (módulo 08)
+        if self.request.user.has_perm("prestamos.view_prestamo"):  # bibliotecario: todo
+            return qs
+        return qs.filter(socio=self.request.user)  # socio: lo suyo
+
+
+class MisPrestamos(PrestamosVisiblesMixin, BaseListView):
+    def render_to_response(self, context):
+        return JsonResponse({"results": [prestamo_a_dict(p) for p in context["object_list"]]})
+
+
+class DetallePrestamo(PrestamosVisiblesMixin, BaseDetailView):
+    def render_to_response(self, context):
+        return JsonResponse(prestamo_a_dict(context["object"]))
+
+
+class RenovarPrestamo(LoginRequiredMixin, PermissionRequiredMixin, SingleObjectMixin, View):
+    model = Prestamo
+    permission_required = "prestamos.renovar_prestamo"
+    raise_exception = True
+    http_method_names = ["post"]
+
+    def has_permission(self):
+        self.object = self.get_object()
+        user = self.request.user
+        # global (bibliotecario) O sobre el objeto (el propio socio, si sigue activo)
+        return user.has_perm(self.permission_required) or user.has_perm(
+            self.permission_required, self.object
+        )
+
+    def post(self, request, *args, **kwargs):
+        try:
+            prestamo = services.renovar(self.object)  # la misma regla que el enlace del módulo 13
+        except services.PrestamoNoRenovable as error:
+            return JsonResponse({"error": str(error)}, status=409)
+        return JsonResponse(prestamo_a_dict(prestamo))

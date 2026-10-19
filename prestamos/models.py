@@ -49,6 +49,11 @@ class Prestamo(ModeloConFechas):
 
     class Meta:
         ordering = ["-fecha_inicio"]
+        permissions = [
+            ("renovar_prestamo", "Puede renovar préstamos"),
+            ("condonar_multa", "Puede condonar multas"),
+            ("ver_estadisticas", "Puede ver estadísticas de préstamos"),
+        ]
         indexes = [
             models.Index(fields=["socio", "estado"], name="prestamo_socio_estado"),
             models.Index(

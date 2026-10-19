@@ -99,6 +99,7 @@ PASSWORD_HASHERS = [
 AUTHENTICATION_BACKENDS = [
     "usuarios.backends.EmailONumeroSocioBackend",
     "django.contrib.auth.backends.ModelBackend",
+    "prestamos.backends.PrestamoPermisosBackend",  # permisos por objeto (módulo 14)
 ]
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "/"
