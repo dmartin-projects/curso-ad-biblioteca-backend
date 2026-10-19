@@ -25,7 +25,7 @@ def test_usuario_por_email_y_superusuario():
 def test_admin_con_perfil_inline(client):
     admin = Usuario.objects.create_superuser("admin@example.com", "clave-segura-123")
     socio = Usuario.objects.create_user("ana@example.com", nombre="Ana")
-    PerfilSocio.objects.create(usuario=socio, numero="S-000001")
+    PerfilSocio.objects.update_or_create(usuario=socio, defaults={"numero": "S-000001"})
     client.force_login(admin)
     assert client.get("/admin/usuarios/usuario/").status_code == 200
     r = client.get(f"/admin/usuarios/usuario/{socio.pk}/change/")
@@ -49,7 +49,7 @@ def test_entrar_actualiza_el_hash_a_argon2(client, settings):
 
 def test_backend_email_o_numero_de_socio():
     u = Usuario.objects.create_user("ana@example.com", password="clave-segura-123")
-    PerfilSocio.objects.create(usuario=u, numero="S-000001")
+    PerfilSocio.objects.update_or_create(usuario=u, defaults={"numero": "S-000001"})
     assert authenticate(username="ANA@example.com", password="clave-segura-123") == u  # iexact
     assert authenticate(username="S-000001", password="clave-segura-123") == u
     assert authenticate(username="S-000001", password="mala") is None

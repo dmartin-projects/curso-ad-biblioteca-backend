@@ -1,7 +1,7 @@
 # catalogo/models.py
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex, OpClass
-from django.contrib.postgres.search import SearchVector, SearchVectorField
+from django.contrib.postgres.search import SearchVectorField
 from django.db import models
 from django.db.models import Count, Exists, OuterRef, Q
 from django.db.models.functions import Lower
@@ -106,15 +106,6 @@ class Libro(ModeloConFechas):
 
     def get_absolute_url(self):
         return reverse("catalogo:detalle_libro", kwargs={"pk": self.pk})
-
-    VECTOR_BUSQUEDA = SearchVector("titulo", weight="A", config="spanish") + SearchVector(
-        "sinopsis", weight="B", config="spanish"
-    )
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        # el vector lo calcula PostgreSQL a partir de las columnas ya guardadas
-        type(self).objects.filter(pk=self.pk).update(busqueda=self.VECTOR_BUSQUEDA)
 
 
 class Autoria(models.Model):

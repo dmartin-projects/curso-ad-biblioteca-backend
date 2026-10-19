@@ -5,12 +5,16 @@ from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 from catalogo.models import Ejemplar
-from usuarios.models import Usuario
+from usuarios.models import PerfilSocio, Usuario
 
 from .models import Prestamo
 
 
 class EjemplarNoDisponible(Exception):
+    pass
+
+
+class LimitePrestamosAlcanzado(Exception):
     pass
 
 
@@ -40,6 +44,12 @@ def informe_socios():
 
 @transaction.atomic
 def prestar(ejemplar_id: int, socio) -> Prestamo:
+    # módulo 15: el perfil, bloqueado; dos préstamos a la vez del mismo socio no pasan los dos el límite
+    perfil = PerfilSocio.objects.select_for_update().get(usuario=socio)
+    if Prestamo.objects.activos().filter(socio=socio).count() >= perfil.max_prestamos:
+        raise LimitePrestamosAlcanzado(
+            f"Ya tienes {perfil.max_prestamos} préstamos activos, el máximo."
+        )
     ejemplar = Ejemplar.objects.select_for_update().get(pk=ejemplar_id)
     if ejemplar.estado != Ejemplar.Estado.DISPONIBLE:
         raise EjemplarNoDisponible(f"El ejemplar {ejemplar.codigo} no está disponible")
@@ -53,6 +63,23 @@ def prestar(ejemplar_id: int, socio) -> Prestamo:
     ejemplar.save(update_fields=["estado"])
 
     transaction.on_commit(lambda: print(f"Préstamo {prestamo.pk} confirmado"))
+    return prestamo
+
+
+# ── Módulo 15: los servicios emiten eventos de dominio ──
+from .signals import prestamo_devuelto, prestamo_vencido  # noqa: E402
+
+
+@transaction.atomic
+def devolver(prestamo: Prestamo) -> Prestamo:
+    prestamo.estado = Prestamo.Estado.DEVUELTO
+    prestamo.fecha_devolucion = timezone.now()
+    prestamo.save(update_fields=["estado", "fecha_devolucion"])
+    # save() y no update(): así el ejemplar envía post_save, como cualquier otro cambio
+    ejemplar = prestamo.ejemplar
+    ejemplar.estado = Ejemplar.Estado.DISPONIBLE
+    ejemplar.save(update_fields=["estado"])
+    prestamo_devuelto.send(sender=Prestamo, prestamo=prestamo)
     return prestamo
 
 
@@ -71,3 +98,21 @@ def renovar(prestamo: Prestamo) -> Prestamo:
     prestamo.fecha_limite += Prestamo.DURACION
     prestamo.save(update_fields=["fecha_limite"])
     return prestamo
+
+
+def avisar_vencidos() -> int:
+    """Emite prestamo_vencido por cada préstamo activo fuera de plazo (lo lanzará Celery Beat, módulo 26)."""
+    ahora = timezone.now()
+    vencidos = Prestamo.objects.vencidos()
+    for prestamo in vencidos:
+        dias = (ahora - prestamo.fecha_limite).days
+        prestamo_vencido.send(sender=Prestamo, prestamo=prestamo, dias_retraso=dias)
+    return len(vencidos)
+
+
+# Por qué la fecha límite NO va en una signal pre_save de Prestamo:
+# - es la regla central del caso de uso "prestar": quien lea prestar() debe verla ahí, no descubrir
+#   que un receptor en otro archivo la rellena;
+# - una signal no se ejecuta con bulk_create() ni con update(): un préstamo creado así quedaría sin
+#   fecha límite (y la columna es NOT NULL: fallaría de forma poco clara);
+# - depende del socio (max_prestamos, tipo de carné…) y del contexto, cosas que conoce el servicio.
