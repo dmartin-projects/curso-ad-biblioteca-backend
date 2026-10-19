@@ -273,6 +273,8 @@ FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:4200")  # enlaces d
 
 # ── Seguridad (módulo 29) ──
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:4200"])
+# Cabeceras que Angular puede leer (por defecto el navegador oculta casi todas) — módulos 38 y 39
+CORS_EXPOSE_HEADERS = ["Content-Disposition", "ETag", "Retry-After", "X-Request-ID"]
 CSP_POLITICA = {
     "default-src": [CSP.SELF],
     "script-src": [CSP.SELF, CSP.NONCE],

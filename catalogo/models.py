@@ -8,8 +8,8 @@ from django.contrib.postgres.indexes import GinIndex, OpClass
 from django.contrib.postgres.search import SearchVectorField
 from django.core.validators import FileExtensionValidator
 from django.db import models
-from django.db.models import Count, Exists, OuterRef, Q
-from django.db.models.functions import Lower
+from django.db.models import Count, Exists, OuterRef, Q, Subquery
+from django.db.models.functions import Coalesce, Lower
 from django.urls import reverse
 
 from core.models import ModeloConFechas
@@ -83,12 +83,19 @@ class LibroQuerySet(models.QuerySet):
         )
 
     def con_disponibles(self):
-        """ejemplares_disponibles en la misma consulta (para LibroListaSerializer, módulo 33)."""
-        return self.annotate(
-            ejemplares_disponibles=Count(
-                "ejemplares", filter=Q(ejemplares__estado="disponible"), distinct=True
-            )
+        """ejemplares_disponibles en la misma consulta (para LibroListaSerializer, módulo 33).
+
+        Subconsulta correlacionada (módulo 39): PostgreSQL ordena y corta (LIMIT 20) antes de
+        calcularla, y el COUNT de la paginación no la arrastra.
+        """
+        disponibles = (
+            Ejemplar.objects.filter(libro=OuterRef("pk"), estado="disponible")
+            .order_by()
+            .values("libro")
+            .annotate(n=Count("pk"))
+            .values("n")
         )
+        return self.annotate(ejemplares_disponibles=Coalesce(Subquery(disponibles), 0))
 
     def para_listado(self):
         """Todo lo que necesita la vista de listado, optimizado."""
@@ -132,6 +139,8 @@ class Libro(ModeloConFechas):
         ordering = ["titulo"]
         indexes = [
             models.Index(fields=["publicado"], name="libro_publicado"),
+            # módulo 39: el orden por defecto del listado de la API (titulo, id) + LIMIT
+            models.Index(fields=["titulo", "id"], name="libro_titulo_id"),
             GinIndex(fields=["busqueda"], name="libro_busqueda_gin"),
             GinIndex(fields=["metadatos"], name="libro_metadatos_gin"),
         ]
@@ -177,6 +186,9 @@ class Ejemplar(ModeloConFechas):
 
     class Meta:
         verbose_name_plural = "ejemplares"
+        indexes = [  # módulo 39: la subconsulta de ejemplares_disponibles
+            models.Index(fields=["libro", "estado"], name="ejemplar_libro_estado"),
+        ]
 
     def __str__(self):
         return f"{self.codigo} · {self.libro}"

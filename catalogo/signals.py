@@ -5,7 +5,7 @@ from django.dispatch import receiver
 from core.cache import subir_version
 
 from .busqueda import actualizar_busqueda
-from .models import Autor, Libro
+from .models import Autor, Ejemplar, Libro
 
 
 @receiver(post_save, sender=Libro, dispatch_uid="libro_actualizar_busqueda")
@@ -68,6 +68,7 @@ def borrar_archivos(sender, instance, **kwargs):
 @receiver([post_save, post_delete], sender=Libro, dispatch_uid="libro_invalida_catalogo")
 @receiver([post_save, post_delete], sender=Autor, dispatch_uid="autor_invalida_catalogo")
 @receiver(m2m_changed, sender=Libro.autores.through, dispatch_uid="autoria_invalida_catalogo")
+@receiver([post_save, post_delete], sender=Ejemplar, dispatch_uid="ejemplar_invalida_catalogo")
 def invalidar_catalogo(sender, **kwargs):
     if kwargs.get("action", "post_").startswith("pre_"):  # m2m_changed avisa antes y después
         return

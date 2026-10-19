@@ -693,6 +693,8 @@ paths:
   /api/v1/libros/{id}/:
     get:
       operationId: libros_retrieve
+      description: 'Módulo 39: ETag. Si el cliente ya tiene esta versión, 304 sin
+        serializar nada.'
       parameters:
       - in: path
         name: id

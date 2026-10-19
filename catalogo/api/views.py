@@ -1,4 +1,5 @@
 # catalogo/api/views.py
+from django.core.cache import cache
 from django.db.models import Count, Q
 from drf_spectacular.utils import extend_schema
 from rest_framework import serializers
@@ -8,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from catalogo.models import Ejemplar, Libro
+from core.cache import obtener_version
 
 
 class EstadisticasSerializer(serializers.Serializer):
@@ -26,11 +28,18 @@ def _estadisticas() -> dict:
     )
 
 
+def estadisticas_cacheadas() -> dict:
+    """Módulo 39: caché de bajo nivel con la versión del catálogo (módulo 23). Cualquier cambio en
+    libros, autores, autorías o ejemplares sube la versión y la clave antigua deja de usarse."""
+    clave = f"catalogo:v{obtener_version('catalogo')}:estadisticas"
+    return cache.get_or_set(clave, _estadisticas, timeout=60 * 60)
+
+
 @extend_schema(responses=EstadisticasSerializer)
 @api_view(["GET"])
 @permission_classes([AllowAny])  # pública: lo declara explícitamente
 def estadisticas_catalogo(request, version):
-    return Response(_estadisticas())
+    return Response(estadisticas_cacheadas())
 
 
 class EstadisticasCatalogo(APIView):
@@ -46,7 +55,11 @@ from pathlib import Path  # noqa: E402
 
 from django.http import FileResponse  # noqa: E402
 from django.shortcuts import redirect  # noqa: E402
+from django.utils.decorators import method_decorator  # noqa: E402
 from django.utils.translation import gettext as _  # noqa: E402
+from django.views.decorators.cache import cache_page  # noqa: E402
+from django.views.decorators.http import condition  # noqa: E402
+from django.views.decorators.vary import vary_on_headers  # noqa: E402
 from rest_framework import viewsets  # noqa: E402
 from rest_framework.decorators import action  # noqa: E402
 from rest_framework.exceptions import NotFound  # noqa: E402
@@ -66,6 +79,16 @@ from .serializers import (  # noqa: E402
     LibroSerializer,
     PortadaSerializer,
 )
+
+
+def etag_libro(request, pk, **kwargs) -> str | None:
+    """Módulo 39: la versión del detalle de un libro, sin cargarlo ni serializarlo."""
+    actualizado = Libro.objects.filter(pk=pk).values_list("actualizado", flat=True).first()
+    if actualizado is None:
+        return None  # no existe: sin ETag, la view responde el 404 de siempre
+    # actualizado no cambia al tocar autores o ejemplares; la versión del catálogo, sí
+    return f"{pk}-{actualizado.timestamp()}-v{obtener_version('catalogo')}"
+
 
 # módulo 36: cualquiera autenticado lee; solo el personal escribe
 LECTURA_O_PERSONAL = [IsAuthenticated & (SoloLectura | EsBibliotecario)]
@@ -87,7 +110,9 @@ class LibroViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = Libro.objects.prefetch_related("autores", "generos")
         if self.action == "list":
-            qs = qs.con_disponibles()  # la anotación solo donde se usa
+            # módulo 39: solo las columnas que pinta LibroListaSerializer (ni sinopsis, ni el vector
+            # de búsqueda, ni los metadatos JSON) y la anotación solo donde se usa
+            return qs.only("id", "titulo", "isbn", "publicado").con_disponibles()
         return qs
 
     def get_serializer_class(self):
@@ -111,6 +136,11 @@ class LibroViewSet(viewsets.ModelViewSet):
         if isinstance(libro.portada.storage, S3Storage):
             return redirect(libro.portada.url)  # URL firmada de 5 minutos (módulo 20)
         return FileResponse(libro.portada.open("rb"), filename=Path(libro.portada.name).name)
+
+    @method_decorator(condition(etag_func=etag_libro))
+    def retrieve(self, request, *args, **kwargs):
+        """Módulo 39: ETag. Si el cliente ya tiene esta versión, 304 sin serializar nada."""
+        return super().retrieve(request, *args, **kwargs)
 
     # destroy: si tiene préstamos, ProtectedError → 409 "en_uso" (exception handler, módulo 38)
 
@@ -139,3 +169,9 @@ class GeneroViewSet(viewsets.ModelViewSet):
     queryset = Genero.objects.select_related("padre").order_by("nombre")
     serializer_class = GeneroSerializer
     pagination_class = None  # lista corta y acotada
+
+    # Módulo 39: igual para todos los usuarios y casi nunca cambia. Varía por idioma (módulo 28)
+    @method_decorator(cache_page(60 * 15))
+    @method_decorator(vary_on_headers("Accept-Language"))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)

@@ -53,9 +53,16 @@ class PrestamoViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
         return [IsAuthenticated()]
 
     def get_queryset(self):
-        return prestamos_visibles(self.request.user).select_related(
-            "ejemplar__libro", "multa"
-        )  # sin order_by: lo pone PaginacionCursorPrestamos
+        qs = prestamos_visibles(self.request.user).select_related("ejemplar__libro", "multa")
+        if self.action in ("list", "vencidos"):
+            # módulo 39: solo lo que pinta PrestamoSerializer. Con select_related hay que incluir
+            # también las FK que se recorren (ejemplar, ejemplar__libro, multa)
+            qs = qs.only(
+                "id", "estado", "fecha_inicio", "fecha_limite", "socio_id",
+                "ejemplar__codigo", "ejemplar__libro__titulo", "ejemplar__libro__isbn",
+                "multa__importe_base",
+            )  # fmt: skip
+        return qs  # sin order_by: lo pone PaginacionCursorPrestamos
 
     @extend_schema(
         request=PrestarSerializer,
