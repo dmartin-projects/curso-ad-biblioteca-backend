@@ -156,3 +156,59 @@ def crear_libro(request):
 
     libro = form.save()
     return JsonResponse(libro_a_dict(libro), status=201)
+
+
+# ── Módulo 11: búsqueda de texto completo y autocompletado tolerante a erratas ──
+import unicodedata  # noqa: E402
+
+from django.contrib.postgres.lookups import Unaccent  # noqa: E402
+from django.contrib.postgres.search import (  # noqa: E402
+    SearchHeadline,
+    SearchQuery,
+    SearchRank,
+    TrigramWordSimilarity,
+)
+from django.db.models import F  # noqa: E402
+
+
+@require_GET
+def buscar_libros(request):
+    texto = request.GET.get("q", "").strip()
+    if not texto:
+        return JsonResponse({"results": []})
+    consulta = SearchQuery(texto, config="spanish", search_type="websearch")
+    libros = (
+        Libro.objects.filter(busqueda=consulta)  # usa el índice GIN
+        .annotate(
+            relevancia=SearchRank(F("busqueda"), consulta),
+            fragmento=SearchHeadline("sinopsis", consulta, config="spanish", max_words=20),
+        )
+        .order_by("-relevancia", "titulo")[:20]
+    )
+    return JsonResponse(
+        {
+            "results": [
+                {"id": libro.pk, "titulo": libro.titulo, "fragmento": libro.fragmento}
+                for libro in libros
+            ]
+        }
+    )
+
+
+def sin_acentos(texto: str) -> str:
+    return "".join(
+        c for c in unicodedata.normalize("NFD", texto) if unicodedata.category(c) != "Mn"
+    )
+
+
+@require_GET
+def autocompletar_autores(request):
+    q = sin_acentos(request.GET.get("q", "").strip())
+    if len(q) < 2:
+        return JsonResponse({"results": []})
+    autores = (
+        Autor.objects.annotate(similitud=TrigramWordSimilarity(q, Unaccent("nombre")))
+        .filter(similitud__gt=0.3)
+        .order_by("-similitud")[:10]
+    )
+    return JsonResponse({"results": [{"id": a.pk, "nombre": a.nombre} for a in autores]})

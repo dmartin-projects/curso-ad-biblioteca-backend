@@ -2,6 +2,8 @@
 from datetime import timedelta
 
 from django.conf import settings
+from django.contrib.postgres.constraints import ExclusionConstraint
+from django.contrib.postgres.fields import DateTimeRangeField, RangeOperators
 from django.db import models
 from django.db.models.functions import Now
 from django.utils import timezone
@@ -100,3 +102,28 @@ class PrestamoActivo(Prestamo):
         verbose_name = "préstamo activo"
         verbose_name_plural = "préstamos activos"
         ordering = ["fecha_limite"]
+
+
+class Sala(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.nombre
+
+
+class ReservaSala(models.Model):
+    sala = models.ForeignKey(Sala, on_delete=models.CASCADE, related_name="reservas")
+    socio = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    periodo = DateTimeRangeField()
+
+    class Meta:
+        constraints = [
+            ExclusionConstraint(
+                name="sin_solapamiento_por_sala",
+                expressions=[("sala", RangeOperators.EQUAL), ("periodo", RangeOperators.OVERLAPS)],
+                violation_error_message="La sala ya está reservada en ese horario.",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.sala} · {self.periodo}"

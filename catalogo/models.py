@@ -1,4 +1,7 @@
 # catalogo/models.py
+from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.indexes import GinIndex, OpClass
+from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.db import models
 from django.db.models import Count, Exists, OuterRef, Q
 from django.db.models.functions import Lower
@@ -19,6 +22,7 @@ class Autor(ModeloConFechas):
     class Meta:
         ordering = ["nombre"]
         verbose_name_plural = "autores"
+        indexes = [GinIndex(OpClass("nombre", name="gin_trgm_ops"), name="autor_nombre_trgm")]
 
     def __str__(self):
         return self.nombre
@@ -78,6 +82,9 @@ class Libro(ModeloConFechas):
     publicado = models.DateField(null=True, blank=True)
     paginas = models.PositiveIntegerField(null=True, blank=True)
     sinopsis = models.TextField(blank=True)
+    metadatos = models.JSONField(default=dict, blank=True)
+    etiquetas = ArrayField(models.CharField(max_length=50), default=list, blank=True)
+    busqueda = SearchVectorField(null=True, editable=False)
     titulo_busqueda = models.GeneratedField(
         expression=Lower("titulo"),
         output_field=models.CharField(max_length=300),
@@ -88,13 +95,26 @@ class Libro(ModeloConFechas):
 
     class Meta:
         ordering = ["titulo"]
-        indexes = [models.Index(fields=["publicado"], name="libro_publicado")]
+        indexes = [
+            models.Index(fields=["publicado"], name="libro_publicado"),
+            GinIndex(fields=["busqueda"], name="libro_busqueda_gin"),
+            GinIndex(fields=["metadatos"], name="libro_metadatos_gin"),
+        ]
 
     def __str__(self):
         return self.titulo
 
     def get_absolute_url(self):
         return reverse("catalogo:detalle_libro", kwargs={"pk": self.pk})
+
+    VECTOR_BUSQUEDA = SearchVector("titulo", weight="A", config="spanish") + SearchVector(
+        "sinopsis", weight="B", config="spanish"
+    )
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # el vector lo calcula PostgreSQL a partir de las columnas ya guardadas
+        type(self).objects.filter(pk=self.pk).update(busqueda=self.VECTOR_BUSQUEDA)
 
 
 class Autoria(models.Model):
