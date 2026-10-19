@@ -13,3 +13,7 @@ WHITENOISE_AUTOREFRESH = True  # busca los estáticos en las apps: no exige coll
 
 # Caché en memoria del proceso: los tests no dependen de Redis (conftest la vacía en cada test)
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+# Sin conexiones persistentes: los hilos de Channels/async no dejan conexiones abiertas
+# que impidan borrar la BD de test al terminar
+DATABASES["default"]["CONN_MAX_AGE"] = 0  # noqa: F405

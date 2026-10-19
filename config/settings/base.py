@@ -22,7 +22,7 @@ DJANGO_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.postgres",
 ]
-THIRD_PARTY_APPS: list[str] = []
+THIRD_PARTY_APPS = ["channels"]
 LOCAL_APPS = [
     "core",
     "usuarios",
@@ -30,7 +30,24 @@ LOCAL_APPS = [
     "prestamos",
     "notificaciones",
 ]
-INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+# daphne el primero: runserver pasa a ser ASGI (módulo 25)
+INSTALLED_APPS = ["daphne", *DJANGO_APPS, *THIRD_PARTY_APPS, *LOCAL_APPS]
+
+ASGI_APPLICATION = "config.asgi.application"
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        # socket_timeout > 5: con redis-py 8 un WebSocket sin mensajes se cae cada 5 s
+        "CONFIG": {
+            "hosts": [
+                {
+                    "address": env("REDIS_CHANNELS_URL", default="redis://localhost:6379/2"),
+                    "socket_timeout": 10,
+                }
+            ]
+        },
+    },
+}
 
 MIDDLEWARE = [
     "core.middleware.RequestIdMiddleware",  # lo primero: el id existe para todo lo demás
