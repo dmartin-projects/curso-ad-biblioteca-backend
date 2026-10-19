@@ -16,3 +16,7 @@ urlpatterns = [
     path("cuentas/", include("django.contrib.auth.urls")),
     path("libros/", RedirectView.as_view(pattern_name="catalogo:lista_libros")),
 ]
+
+admin.site.site_header = "Biblioteca · Administración"
+admin.site.site_title = "Biblioteca"
+admin.site.index_title = "Panel de gestión"

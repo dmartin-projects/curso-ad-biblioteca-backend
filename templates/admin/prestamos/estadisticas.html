@@ -1,0 +1,12 @@
+{# templates/admin/prestamos/estadisticas.html #}
+{% extends "admin/base_site.html" %}
+{% block content %}
+  <h2>Préstamos por mes</h2>
+  <table>
+    {% for fila in por_mes %}<tr><td>{{ fila.mes|date:"F Y" }}</td><td>{{ fila.total }}</td></tr>{% endfor %}
+  </table>
+  <h2>Los 10 libros más prestados</h2>
+  <table>
+    {% for libro in mas_prestados %}<tr><td>{{ libro.titulo }}</td><td>{{ libro.n }}</td></tr>{% endfor %}
+  </table>
+{% endblock %}
