@@ -10,3 +10,6 @@ STORAGES = {
     "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
 }
 WHITENOISE_AUTOREFRESH = True  # busca los estáticos en las apps: no exige collectstatic
+
+# Caché en memoria del proceso: los tests no dependen de Redis (conftest la vacía en cada test)
+CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}

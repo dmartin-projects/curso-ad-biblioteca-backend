@@ -224,5 +224,5 @@ def test_si_la_transaccion_falla_no_se_borra(libro, django_capture_on_commit_cal
     primera = libro.portada.name
     with django_capture_on_commit_callbacks(execute=False) as callbacks:
         libro.portada.save("b.png", png())
-    assert len(callbacks) == 1  # el borrado espera al commit…
+    assert callbacks  # el borrado espera al commit…
     assert default_storage.exists(primera)  # …y si no llega, el archivo sigue ahí

@@ -138,6 +138,17 @@ LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 PASSWORD_RESET_TIMEOUT = 60 * 60 * 24
 
+# ── Caché (módulo 23) ──
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": env("REDIS_URL", default="redis://localhost:6379/1"),
+        "KEY_PREFIX": "biblioteca",
+        "TIMEOUT": 300,
+    },
+}
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"  # lee de Redis, persiste en la BD
+
 # Emails: de momento se imprimen en la consola de runserver (módulo 22: Mailpit y SMTP)
 MAILERS = {"default": {"BACKEND": "django.core.mail.backends.console.EmailBackend"}}
 DEFAULT_FROM_EMAIL = '"Biblioteca" <no-responder@biblioteca.example>'

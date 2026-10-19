@@ -1,10 +1,14 @@
 import json
+from urllib.parse import urlencode
 
+from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_GET, require_http_methods
+
+from core.cache import obtener_version
 
 from .models import Autor, Libro
 
@@ -100,6 +104,17 @@ from .mixins import FiltrosLibroMixin, JSONResponseMixin  # noqa: E402
 
 class LibroListJSON(JSONResponseMixin, FiltrosLibroMixin, BaseListView):
     paginate_by = 20
+
+    def get(self, request, *args, **kwargs):
+        # módulo 23: caché versionada; la clave incluye TODO lo que cambia el resultado
+        filtros = urlencode(sorted(request.GET.items()))
+        clave = f"catalogo:v{obtener_version('catalogo')}:libros:{filtros}"
+        datos = cache.get(clave)
+        if datos is None:
+            self.object_list = self.get_queryset()
+            datos = self.get_data(self.get_context_data())
+            cache.set(clave, datos, timeout=600)
+        return JsonResponse(datos)
 
     def get_data(self, context):
         return {
