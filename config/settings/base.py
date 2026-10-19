@@ -33,6 +33,8 @@ LOCAL_APPS = [
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
+    "core.middleware.RequestIdMiddleware",  # lo primero: el id existe para todo lo demás
+    "core.middleware.TiempoRespuestaMiddleware",  # y mide la petición completa
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -40,6 +42,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "core.middleware.MantenimientoMiddleware",
+    "core.middleware.PeticionesLentasMiddleware",  # después de Auth (usa request.user)
 ]
 
 ROOT_URLCONF = "config.urls"
