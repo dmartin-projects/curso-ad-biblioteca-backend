@@ -198,6 +198,36 @@ CSP_POLITICA = {
 # En desarrollo, solo informa: el navegador avisa en la consola y envía un informe a /csp-report/
 SECURE_CSP_REPORT_ONLY = {**CSP_POLITICA, "report-uri": "/csp-report/"}
 
+# ── Logging (módulo 30) ──
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,  # ⚠️ con True silenciarías los loggers de Django y librerías
+    "filters": {"request_id": {"()": "core.logging.RequestIdFilter"}},
+    "formatters": {
+        "texto": {"format": "{asctime} {levelname} {name} [{request_id}] {message}", "style": "{"},
+        "json": {
+            "()": "pythonjsonlogger.json.JsonFormatter",
+            "fmt": "%(asctime)s %(levelname)s %(name)s %(request_id)s %(message)s",
+        },
+    },
+    "handlers": {
+        "consola": {
+            "class": "logging.StreamHandler",
+            "formatter": env("LOG_FORMAT", default="texto"),  # "json" en producción
+            "filters": ["request_id"],
+        },
+    },
+    "root": {"handlers": ["consola"], "level": "INFO"},
+    "loggers": {
+        "django": {"level": "INFO"},
+        "django.db.backends": {"level": env("SQL_LOG_LEVEL", default="WARNING")},
+        "celery": {"level": "INFO"},
+        "httpx": {"level": "WARNING"},
+        "weasyprint": {"level": "WARNING"},  # INFO es muy ruidoso (cada paso del PDF)
+        "fontTools": {"level": "WARNING"},
+    },
+}
+
 # ── APIs externas (módulo 27) ──
 OPENLIBRARY_URL = env("OPENLIBRARY_URL", default="https://openlibrary.org")
 HTTP_USER_AGENT = env("HTTP_USER_AGENT", default="Biblioteca/1.0 (contacto@biblioteca.example)")
@@ -225,6 +255,7 @@ CELERY_TASK_TIME_LIMIT = 300
 CELERY_TASK_SOFT_TIME_LIMIT = 270
 CELERY_RESULT_EXPIRES = 60 * 60 * 24
 CELERY_TASK_TRACK_STARTED = True
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False  # el worker usa nuestro LOGGING (con request_id)
 CELERY_WORKER_SEND_TASK_EVENTS = True  # sin eventos, Flower ve los workers pero no las tareas
 CELERY_TASK_SEND_SENT_EVENT = True
 CELERY_TASK_DEFAULT_QUEUE = "default"

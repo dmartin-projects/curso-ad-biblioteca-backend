@@ -1,4 +1,5 @@
 # catalogo/tasks.py — importación en lotes paralelos con un chord (módulo 26)
+import logging
 from dataclasses import asdict
 from datetime import date
 
@@ -10,6 +11,8 @@ from core.circuit_breaker import CircuitBreaker, CircuitoAbierto
 from .clients.openlibrary import OpenLibraryClient, OpenLibraryError
 from .models import Importacion, Libro
 from .servicios_importacion import importar_libros
+
+logger = logging.getLogger(__name__)
 
 
 @shared_task
@@ -49,6 +52,7 @@ breaker_openlibrary = CircuitBreaker("openlibrary", umbral=5, enfriamiento=120)
 @shared_task(bind=True, rate_limit="60/m", max_retries=5)  # límite de uso en origen
 def completar_desde_openlibrary(self, libro_id: int) -> str:
     libro = Libro.objects.get(pk=libro_id)
+    logger.info("Completando libro %s (ISBN %s) desde Open Library", libro_id, libro.isbn)
     try:
         datos = breaker_openlibrary.llamar(OpenLibraryClient().buscar_isbn, libro.isbn)
     except CircuitoAbierto as exc:

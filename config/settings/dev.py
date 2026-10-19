@@ -4,7 +4,15 @@ DEBUG = True
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 # Herramientas de desarrollo que nunca deben llegar a producción
-INSTALLED_APPS += []  # noqa: F405  (django-debug-toolbar en el módulo 30)
+# Módulo 30. USAR_SILK=0 para desactivarlo: silk guarda CADA petición en la BD (sin BD, nada responde)
+if env.bool("USAR_SILK", default=True):  # noqa: F405
+    INSTALLED_APPS += ["debug_toolbar", "silk"]  # noqa: F405
+    MIDDLEWARE = [  # noqa: F405
+        "debug_toolbar.middleware.DebugToolbarMiddleware",
+        "silk.middleware.SilkyMiddleware",
+        *MIDDLEWARE,  # noqa: F405
+    ]
+    INTERNAL_IPS = ["127.0.0.1"]
 
 # Emails (módulo 22): consola por defecto; con USAR_MAILPIT=1 en .env, a Mailpit (http://localhost:8025)
 if env.bool("USAR_MAILPIT", default=False):  # noqa: F405

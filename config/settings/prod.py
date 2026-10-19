@@ -7,7 +7,7 @@ ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS")  # noqa: F405  (sin valor por d
 # Solo porque nuestro proxy (Caddy/nginx) SIEMPRE fija esta cabecera, sobrescribiendo la del cliente
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = True
-SECURE_REDIRECT_EXEMPT = [r"^health/$"]  # el healthcheck interno llega por HTTP
+SECURE_REDIRECT_EXEMPT = [r"^health/"]  # los healthchecks internos llegan por HTTP
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=3600)  # noqa: F405  (súbelo poco a poco)
@@ -42,3 +42,16 @@ MAILERS = {
         },
     },
 }
+
+# ── Sentry (módulo 30): solo si hay DSN ──
+if SENTRY_DSN := env("SENTRY_DSN", default=""):  # noqa: F405
+    import sentry_sdk
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=env("ENTORNO", default="produccion"),  # noqa: F405
+        release=env("GIT_SHA", default=None),  # noqa: F405
+        traces_sample_rate=0.1,
+        # Sin datos personales: es el comportamiento por defecto. send_default_pii=False está
+        # obsoleto desde sentry-sdk 2.7x; para afinar qué se envía, data_collection={...}
+    )
