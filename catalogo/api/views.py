@@ -34,11 +34,13 @@ class EstadisticasCatalogo(APIView):
 from django.db.models import ProtectedError  # noqa: E402
 from django.utils.translation import gettext as _  # noqa: E402
 from rest_framework import status, viewsets  # noqa: E402
+from rest_framework.filters import OrderingFilter, UnaccentedSearchFilter  # noqa: E402
 from rest_framework.permissions import DjangoModelPermissions, IsAuthenticated  # noqa: E402
 
 from catalogo.models import Autor, Genero  # noqa: E402
 from core.permissions import EsBibliotecario, SoloLectura  # noqa: E402
 
+from .filters import LibroFilter  # noqa: E402
 from .serializers import (  # noqa: E402
     AutorSerializer,
     GeneroSerializer,
@@ -53,12 +55,21 @@ LECTURA_O_PERSONAL = [IsAuthenticated & (SoloLectura | EsBibliotecario)]
 class LibroViewSet(viewsets.ModelViewSet):
     permission_classes = LECTURA_O_PERSONAL  # (en el módulo 34: DjangoModelPermissions)
     queryset = Libro.objects.none()  # para el esquema OpenAPI
+    filterset_class = LibroFilter  # módulo 37
+    search_fields = ["titulo", "=isbn", "autores__nombre"]
+    ordering_fields = [
+        "titulo",
+        "publicado",
+        "paginas",
+        "ejemplares_disponibles",
+    ]  # 🔐 lista blanca
+    ordering = ["titulo", "id"]  # el id desempata: paginación estable
 
     def get_queryset(self):
         qs = Libro.objects.prefetch_related("autores", "generos")
         if self.action == "list":
             qs = qs.con_disponibles()  # la anotación solo donde se usa
-        return qs.order_by("titulo")
+        return qs
 
     def get_serializer_class(self):
         return LibroListaSerializer if self.action == "list" else LibroSerializer
@@ -75,9 +86,14 @@ class LibroViewSet(viewsets.ModelViewSet):
 
 class AutorViewSet(viewsets.ModelViewSet):
     permission_classes = LECTURA_O_PERSONAL
-    queryset = Autor.objects.order_by("nombre")
+    queryset = Autor.objects.all()
     serializer_class = AutorSerializer
     lookup_field = "slug"  # /autores/frank-herbert/
+    # módulo 37: "garcia" encuentra "García" (necesita la extensión unaccent, módulo 11)
+    filter_backends = [UnaccentedSearchFilter, OrderingFilter]
+    search_fields = ["nombre", "apellidos"]
+    ordering_fields = ["nombre"]
+    ordering = ["nombre", "id"]
 
     def perform_create(self, serializer):
         from django.utils.text import slugify
@@ -91,3 +107,4 @@ class GeneroViewSet(viewsets.ModelViewSet):
     permission_classes = [DjangoModelPermissions]
     queryset = Genero.objects.select_related("padre").order_by("nombre")
     serializer_class = GeneroSerializer
+    pagination_class = None  # lista corta y acotada

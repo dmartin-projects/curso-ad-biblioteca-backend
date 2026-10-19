@@ -29,8 +29,8 @@ def test_listado_y_detalle_usan_serializers_distintos(socio, django_assert_num_q
     for _ in range(5):
         EjemplarFactory.create_batch(2, libro=LibroFactory())
     api = cliente(socio)
-    with django_assert_num_queries(3):  # libros (con la anotación) + autores + géneros
-        lista = api.get("/api/v1/libros/").json()
+    with django_assert_num_queries(4):  # COUNT (paginación, módulo 37) + libros + autores + géneros
+        lista = api.get("/api/v1/libros/").json()["results"]  # paginado desde el módulo 37
     assert len(lista) == 5 and lista[0]["ejemplares_disponibles"] == 2
     detalle = api.get(f"/api/v1/libros/{lista[0]['id']}/").json()
     assert "ejemplares_disponibles" not in detalle and "sinopsis" in detalle
@@ -91,7 +91,7 @@ def test_flujo_completo_de_un_prestamo(socio):
     r = api.post(f"/api/v1/prestamos/{pk}/renovar/")
     assert r.status_code == 200 and r.json()["fecha_limite"] > limite
 
-    assert api.get("/api/v1/prestamos/").json()[0]["id"] == pk
+    assert api.get("/api/v1/prestamos/").json()["results"][0]["id"] == pk
     r = api.post(f"/api/v1/prestamos/{pk}/devolver/")
     assert r.json()["estado"] == "devuelto"
     assert api.post(f"/api/v1/prestamos/{pk}/devolver/").status_code == 409
@@ -113,7 +113,7 @@ def test_vencido_no_se_renueva_y_aparece_en_vencidos(socio):
     assert api.post(f"/api/v1/prestamos/{vencido.pk}/renovar/").status_code == 409
     assert api.get("/api/v1/prestamos/vencidos/").status_code == 403  # módulo 36: solo personal
     biblio = cliente(UsuarioFactory(), "bibliotecarios")
-    assert len(biblio.get("/api/v1/prestamos/vencidos/").json()) == 2  # los de todos
+    assert len(biblio.get("/api/v1/prestamos/vencidos/").json()["results"]) == 2  # los de todos
 
 
 def test_ajeno_da_404_y_el_bibliotecario_lo_ve_todo(socio):
@@ -121,7 +121,7 @@ def test_ajeno_da_404_y_el_bibliotecario_lo_ve_todo(socio):
     assert cliente(socio).get(f"/api/v1/prestamos/{ajeno.pk}/").status_code == 404
     assert cliente(socio).post(f"/api/v1/prestamos/{ajeno.pk}/devolver/").status_code == 404
     biblio = cliente(UsuarioFactory(), "bibliotecarios")
-    assert len(biblio.get("/api/v1/prestamos/").json()) == 1
+    assert len(biblio.get("/api/v1/prestamos/").json()["results"]) == 1
 
 
 def test_listado_de_prestamos_sin_n_mas_1(socio, django_assert_num_queries):
@@ -129,7 +129,7 @@ def test_listado_de_prestamos_sin_n_mas_1(socio, django_assert_num_queries):
         Multa.objects.create(prestamo=prestamo, importe_base=Decimal("1.50"))
     api = cliente(socio)
     with django_assert_num_queries(2):  # ¿es personal? (grupos) + préstamos con libro y multa
-        assert len(api.get("/api/v1/prestamos/").json()) == 10
+        assert len(api.get("/api/v1/prestamos/").json()["results"]) == 10
 
 
 # ── 4. /auth/me/ ──

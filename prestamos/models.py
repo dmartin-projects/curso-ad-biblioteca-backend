@@ -67,6 +67,13 @@ class Prestamo(ModeloConFechas):
         ]
         indexes = [
             models.Index(fields=["socio", "estado"], name="prestamo_socio_estado"),
+            # módulo 37: la paginación por cursor del historial (WHERE socio = … ORDER BY …)
+            models.Index(
+                "socio",
+                models.F("fecha_inicio").desc(),
+                models.F("id").desc(),
+                name="prestamo_socio_historial",
+            ),
             models.Index(
                 fields=["fecha_limite"],
                 name="prestamo_activo_limite",

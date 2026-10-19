@@ -224,6 +224,14 @@ REST_FRAMEWORK = {
     "ALLOWED_VERSIONS": ["v1"],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "COERCE_DECIMAL_TO_STRING": True,
+    # módulo 37: filtros y paginación por defecto
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ],
+    "DEFAULT_PAGINATION_CLASS": "core.pagination.PaginacionEstandar",
+    "PAGE_SIZE": 20,
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
 }
 # drf-spectacular revisa el esquema en `manage.py check`: las APIView sin serializer dan W002 y

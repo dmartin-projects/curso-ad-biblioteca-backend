@@ -1,16 +1,19 @@
 # prestamos/api/views.py
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.response import Response
 
 from catalogo.models import Ejemplar
+from core.pagination import PaginacionCursorPrestamos
 from core.permissions import EsBibliotecario, es_personal
 from prestamos import services
 from prestamos.models import Prestamo
 
+from .filters import PrestamoFilter
 from .serializers import PrestamoSerializer, PrestarSerializer
 
 
@@ -36,6 +39,9 @@ class PrestamoViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
 
     serializer_class = PrestamoSerializer
     queryset = Prestamo.objects.none()  # solo para el esquema OpenAPI: el real es get_queryset()
+    pagination_class = PaginacionCursorPrestamos  # módulo 37: historial con scroll infinito
+    filter_backends = [DjangoFilterBackend]  # el orden lo fija el cursor (sin ?ordering=)
+    filterset_class = PrestamoFilter
 
     def get_permissions(self):
         if self.action == "vencidos":
@@ -46,11 +52,9 @@ class PrestamoViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
         return [IsAuthenticated()]
 
     def get_queryset(self):
-        return (
-            prestamos_visibles(self.request.user)
-            .select_related("ejemplar__libro", "multa")
-            .order_by("-fecha_inicio")
-        )
+        return prestamos_visibles(self.request.user).select_related(
+            "ejemplar__libro", "multa"
+        )  # sin order_by: lo pone PaginacionCursorPrestamos
 
     def create(self, request, *args, **kwargs):  # POST /prestamos/ → servicio
         entrada = PrestarSerializer(data=request.data)

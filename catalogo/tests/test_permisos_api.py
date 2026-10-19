@@ -70,7 +70,7 @@ def test_matriz_prestamos(rol):
     api = como(rol, prestamo.socio)
     lista = api.get("/api/v1/prestamos/")
     obtenidos = (
-        len(lista.json()) if lista.status_code == 200 else lista.status_code,
+        len(lista.json()["results"]) if lista.status_code == 200 else lista.status_code,
         api.get(f"/api/v1/prestamos/{prestamo.pk}/").status_code,
         api.post(f"/api/v1/prestamos/{prestamo.pk}/devolver/").status_code,
         api.get("/api/v1/prestamos/vencidos/").status_code,
