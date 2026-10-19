@@ -17,21 +17,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: catalogo/api/serializers.py:83
+#: catalogo/api/serializers.py:85
 msgid "La fecha de publicación no puede ser futura."
 msgstr "The publication date cannot be in the future."
 
-#: catalogo/api/serializers.py:88
+#: catalogo/api/serializers.py:90
 msgid "Indica al menos un autor."
 msgstr "Add at least one author."
 
-#: catalogo/api/serializers.py:90
+#: catalogo/api/serializers.py:92
 msgid "Hay autores repetidos."
 msgstr "There are duplicate authors."
 
-#: catalogo/api/views.py:71
-msgid "El libro tiene préstamos registrados y no se puede borrar."
-msgstr "The book has recorded loans and cannot be deleted."
+#: catalogo/api/views.py:109
+msgid "Este libro no tiene portada."
+msgstr "This book has no cover."
 
 #: catalogo/validators.py:10
 msgid "El ISBN debe tener 13 dígitos."
@@ -48,6 +48,50 @@ msgstr "Spanish"
 #: config/settings/base.py:121
 msgid "Inglés"
 msgstr "English"
+
+#: core/api/exceptions.py:18
+msgid "Los datos enviados no son válidos."
+msgstr "The submitted data is not valid."
+
+#: core/api/exceptions.py:19
+msgid "Debes iniciar sesión."
+msgstr "You must log in."
+
+#: core/api/exceptions.py:20
+msgid "No tienes permiso para realizar esta acción."
+msgstr "You do not have permission to perform this action."
+
+#: core/api/exceptions.py:21 core/views.py:132
+msgid "El recurso no existe."
+msgstr "The resource does not exist."
+
+#: core/api/exceptions.py:22
+msgid "Método no permitido."
+msgstr "Method not allowed."
+
+#: core/api/exceptions.py:23
+msgid "Tipo de contenido no soportado."
+msgstr "Unsupported content type."
+
+#: core/api/exceptions.py:24
+msgid "Demasiadas peticiones. Inténtalo más tarde."
+msgstr "Too many requests. Try again later."
+
+#: core/api/exceptions.py:67
+msgid "No se puede borrar: hay registros que dependen de él."
+msgstr "It cannot be deleted: other records depend on it."
+
+#: core/api/exceptions.py:80 core/views.py:138
+msgid "Ha ocurrido un error inesperado."
+msgstr "An unexpected error has occurred."
+
+#: core/api/exceptions.py:83
+msgid "Error."
+msgstr "Error."
+
+#: core/exceptions.py:10
+msgid "La operación no es posible en el estado actual."
+msgstr "The operation is not possible in the current state."
 
 #: core/middleware.py:73
 msgid "En mantenimiento"
@@ -66,21 +110,34 @@ msgstr "The file exceeds %(megas)s MB."
 msgid "El archivo no es un PDF válido."
 msgstr "The file is not a valid PDF."
 
-#: prestamos/api/views.py:24
-msgid "Solo el socio del préstamo o el personal pueden hacer esto."
-msgstr "Only the member who has the loan or the staff can do this."
+#: core/validators.py:46
+#, python-format
+msgid "Tipo de archivo no admitido (%(tipo)s)."
+msgstr "File type not allowed (%(tipo)s)."
 
-#: prestamos/api/views.py:62
+#: prestamos/api/serializers.py:16
 msgid "No existe ese ejemplar."
 msgstr "That copy does not exist."
 
-#: prestamos/api/views.py:74
-msgid "El préstamo ya estaba devuelto."
-msgstr "The loan had already been returned."
+#: prestamos/api/views.py:32
+msgid "Solo el socio del préstamo o el personal pueden hacer esto."
+msgstr "Only the member who has the loan or the staff can do this."
 
 #: prestamos/emails.py:23
 msgid "Tus préstamos vencen pronto"
 msgstr "Your loans are due soon"
+
+#: prestamos/exceptions.py:9
+msgid "El ejemplar no está disponible."
+msgstr "The copy is not available."
+
+#: prestamos/exceptions.py:14
+msgid "El préstamo ya estaba devuelto."
+msgstr "The loan had already been returned."
+
+#: prestamos/exceptions.py:19
+msgid "Este préstamo no se puede renovar."
+msgstr "This loan cannot be renewed."
 
 #: prestamos/models.py:34
 msgid "Activo"
@@ -122,7 +179,7 @@ msgstr "loan"
 msgid "préstamos"
 msgstr "loans"
 
-#: prestamos/services.py:49
+#: prestamos/services.py:47
 #, python-format
 msgid "El ejemplar %(codigo)s no está disponible"
 msgstr "Copy %(codigo)s is not available"
@@ -132,11 +189,15 @@ msgstr "Copy %(codigo)s is not available"
 msgid "Ya tienes %(n)s préstamos activos, el máximo."
 msgstr "You already have %(n)s active loans, the maximum."
 
-#: prestamos/services.py:106
+#: prestamos/exceptions.py
+msgid "Has alcanzado el máximo de préstamos activos."
+msgstr "You have reached the maximum number of active loans."
+
+#: prestamos/services.py:96
 msgid "Solo se renuevan préstamos activos."
 msgstr "Only active loans can be renewed."
 
-#: prestamos/services.py:108
+#: prestamos/services.py:99
 msgid "Un préstamo vencido no se renueva: devuélvelo."
 msgstr "An overdue loan cannot be renewed: return it."
 
@@ -199,7 +260,7 @@ msgstr "return by"
 msgid "días"
 msgstr "days"
 
-#: usuarios/api/auth.py:53
+#: usuarios/api/auth.py:63
 msgid "Sin sesión."
 msgstr "No session."
 
@@ -207,17 +268,17 @@ msgstr "No session."
 msgid "La contraseña actual no es correcta."
 msgstr "The current password is not correct."
 
-#: usuarios/api/views.py:26
-msgid "Enlace no válido o caducado."
-msgstr "Invalid or expired link."
-
-#: usuarios/api/views.py:57
+#: usuarios/api/views.py:59
 msgid "Revisa tu email: te hemos enviado un enlace para continuar."
 msgstr "Check your email: we have sent you a link to continue."
 
-#: usuarios/api/views.py:95
+#: usuarios/api/views.py:101
 msgid "Si el email existe, te hemos enviado un enlace."
 msgstr "If the email exists, we have sent you a link."
+
+#: usuarios/exceptions.py:10
+msgid "Enlace no válido o caducado."
+msgstr "Invalid or expired link."
 
 #: usuarios/tasks.py:15
 msgid "Completa tu registro"

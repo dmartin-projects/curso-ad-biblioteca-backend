@@ -1,10 +1,12 @@
 # usuarios/api/views.py
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy
+from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, serializers, status
 from rest_framework.response import Response
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 
+from core.api.serializers import MensajeSerializer, ProblemaSerializer
+from usuarios.exceptions import EnlaceNoValido
 from usuarios.services import (
     completar_registro,
     registro_pendiente,
@@ -18,12 +20,11 @@ from .serializers import (
     CambiarPasswordSerializer,
     CompletarRegistroSerializer,
     ConfirmarRecuperacionSerializer,
+    EmailSerializer,
     RegistroSerializer,
     UsuarioSerializer,
     validar_password,
 )
-
-ENLACE_NO_VALIDO = {"detail": gettext_lazy("Enlace no válido o caducado.")}
 
 
 def cerrar_todas_las_sesiones(usuario) -> None:
@@ -48,6 +49,7 @@ class Registro(generics.GenericAPIView):
     authentication_classes = []
     throttle_scope = "registro"
 
+    @extend_schema(responses={202: MensajeSerializer})
     def post(self, request, **kwargs):
         s = self.get_serializer(data=request.data)
         s.is_valid(raise_exception=True)
@@ -60,16 +62,19 @@ class Registro(generics.GenericAPIView):
 
 
 class CompletarRegistro(VistaPublicaAuth):
+    @extend_schema(
+        request=CompletarRegistroSerializer, responses={204: None, 400: ProblemaSerializer}
+    )
     def post(self, request, **kwargs):
         s = CompletarRegistroSerializer(data=request.data)
         s.is_valid(raise_exception=True)
         usuario = usuario_desde_enlace(s.validated_data["uid"], s.validated_data["token"])
         if usuario is None or not registro_pendiente(usuario):
-            return Response(ENLACE_NO_VALIDO, status=status.HTTP_400_BAD_REQUEST)
+            raise EnlaceNoValido()
         try:
             validar_password(s.validated_data["password"], usuario)
-        except serializers.ValidationError as error:  # validadores de Django → 400
-            return Response({"password": error.detail}, status=status.HTTP_400_BAD_REQUEST)
+        except serializers.ValidationError as error:  # con la clave del campo, como el resto
+            raise serializers.ValidationError({"password": error.detail}) from error
         completar_registro(usuario, s.validated_data["password"])  # contraseña + activa, a la vez
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -89,6 +94,7 @@ class CambiarPassword(generics.GenericAPIView):
 class SolicitarRecuperacion(VistaPublicaAuth):
     throttle_scope = "recuperar"
 
+    @extend_schema(request=EmailSerializer, responses=MensajeSerializer)
     def post(self, request, **kwargs):
         solicitar_recuperacion(request.data.get("email", ""))
         # 🔐 misma respuesta exista o no: no reveles qué emails están registrados
@@ -96,16 +102,19 @@ class SolicitarRecuperacion(VistaPublicaAuth):
 
 
 class ConfirmarRecuperacion(VistaPublicaAuth):
+    @extend_schema(
+        request=ConfirmarRecuperacionSerializer, responses={204: None, 400: ProblemaSerializer}
+    )
     def post(self, request, **kwargs):
         s = ConfirmarRecuperacionSerializer(data=request.data)
         s.is_valid(raise_exception=True)
         usuario = usuario_desde_enlace(s.validated_data["uid"], s.validated_data["token"])
         if usuario is None:
-            return Response(ENLACE_NO_VALIDO, status=status.HTTP_400_BAD_REQUEST)
+            raise EnlaceNoValido()
         try:
             validar_password(s.validated_data["password"], usuario)
-        except serializers.ValidationError as error:  # validadores de Django → 400
-            return Response({"password": error.detail}, status=status.HTTP_400_BAD_REQUEST)
+        except serializers.ValidationError as error:  # con la clave del campo, como el resto
+            raise serializers.ValidationError({"password": error.detail}) from error
         usuario.set_password(s.validated_data["password"])
         usuario.save(update_fields=["password"])  # cambia el hash → el enlace deja de valer
         cerrar_todas_las_sesiones(usuario)

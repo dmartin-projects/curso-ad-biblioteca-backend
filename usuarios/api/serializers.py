@@ -58,3 +58,17 @@ class ConfirmarRecuperacionSerializer(serializers.Serializer):
     uid = serializers.CharField()
     token = serializers.CharField()
     password = serializers.CharField(write_only=True)
+
+
+# ── Solo para documentar (OpenAPI, módulo 38): las vistas de auth no usan GenericAPIView ──
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+
+class AccessSerializer(serializers.Serializer):
+    access = serializers.CharField(help_text="JWT de acceso; el refresh va en una cookie HttpOnly")
+
+
+class EmailSerializer(serializers.Serializer):
+    email = serializers.EmailField()

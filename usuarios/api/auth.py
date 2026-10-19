@@ -2,7 +2,9 @@
 from django.conf import settings
 from django.db import transaction
 from django.utils.translation import gettext as _
+from drf_spectacular.utils import extend_schema
 from rest_framework import permissions, status
+from rest_framework.exceptions import NotAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
@@ -10,6 +12,10 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, Toke
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from core.api.serializers import ProblemaSerializer
+
+from .serializers import AccessSerializer, LoginSerializer
 
 
 def _poner_cookie_refresh(response, refresh: str):
@@ -47,6 +53,9 @@ class VistaPublicaAuth(APIView):
 class Login(VistaPublicaAuth):
     throttle_scope = "login"  # 5/min (DEFAULT_THROTTLE_RATES)
 
+    @extend_schema(
+        request=LoginSerializer, responses={200: AccessSerializer, 401: ProblemaSerializer}
+    )
     def post(self, request, **kwargs):
         # campos: email (USERNAME_FIELD) y password. Con la request en el context, authenticate()
         # la recibe: los backends y la signal user_login_failed saben de dónde viene el intento
@@ -59,10 +68,11 @@ class Login(VistaPublicaAuth):
 
 
 class Refresh(VistaPublicaAuth):
+    @extend_schema(request=None, responses={200: AccessSerializer, 401: ProblemaSerializer})
     def post(self, request, **kwargs):
         refresh = request.COOKIES.get(settings.JWT_REFRESH_COOKIE["key"])
         if not refresh:
-            return Response({"detail": _("Sin sesión.")}, status=status.HTTP_401_UNAUTHORIZED)
+            raise NotAuthenticated(_("Sin sesión."))  # el exception handler le da el formato común
         serializer = TokenRefreshSerializer(data={"refresh": refresh})
         try:
             # Rotación atómica: dos requests con la misma cookie (dos pestañas, un robo) se ponen en
@@ -78,6 +88,7 @@ class Refresh(VistaPublicaAuth):
 
 
 class Logout(VistaPublicaAuth):
+    @extend_schema(request=None, responses={204: None})
     def post(self, request, **kwargs):
         cfg = settings.JWT_REFRESH_COOKIE
         if refresh := request.COOKIES.get(cfg["key"]):

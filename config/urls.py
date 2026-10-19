@@ -4,6 +4,11 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import RedirectView
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
 
 from core import views as core_views
 
@@ -12,6 +17,10 @@ from . import views
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/<str:version>/", include("config.api_urls")),  # módulo 32
+    # módulo 38: esquema OpenAPI y documentación (Swagger UI y Redoc)
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger"),
+    path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
     path("health/", views.health, name="health"),
     path("health/live/", core_views.health_live, name="health_live"),
     path("health/ready/", core_views.health_ready, name="health_ready"),
@@ -35,3 +44,7 @@ if "silk" in settings.INSTALLED_APPS:  # módulo 30: solo en dev.py
 admin.site.site_header = "Biblioteca · Administración"
 admin.site.site_title = "Biblioteca"
 admin.site.index_title = "Panel de gestión"
+
+# módulo 38: /api/no-existe/ también responde con el formato de error de la API
+handler404 = "core.views.error_404"
+handler500 = "core.views.error_500"

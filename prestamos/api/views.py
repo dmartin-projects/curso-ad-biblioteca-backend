@@ -1,13 +1,18 @@
 # prestamos/api/views.py
-from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy
+import csv
+
+from django.http import StreamingHttpResponse
+from django.utils.translation import gettext_lazy as _
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.response import Response
 
-from catalogo.models import Ejemplar
+from catalogo.archivos import Eco
+from core.api.serializers import ProblemaSerializer
 from core.pagination import PaginacionCursorPrestamos
 from core.permissions import EsBibliotecario, es_personal
 from prestamos import services
@@ -24,14 +29,10 @@ def prestamos_visibles(user):
 
 
 class EsSocioDelPrestamoOBibliotecario(BasePermission):
-    message = gettext_lazy("Solo el socio del préstamo o el personal pueden hacer esto.")
+    message = _("Solo el socio del préstamo o el personal pueden hacer esto.")
 
     def has_object_permission(self, request, view, prestamo):
         return prestamo.socio_id == request.user.id or es_personal(request.user)
-
-
-def conflicto(error: Exception) -> Response:
-    return Response({"detail": str(error)}, status=status.HTTP_409_CONFLICT)
 
 
 class PrestamoViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
@@ -56,37 +57,55 @@ class PrestamoViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
             "ejemplar__libro", "multa"
         )  # sin order_by: lo pone PaginacionCursorPrestamos
 
+    @extend_schema(
+        request=PrestarSerializer,
+        responses={
+            201: PrestamoSerializer,
+            400: ProblemaSerializer,
+            409: ProblemaSerializer,
+            422: ProblemaSerializer,
+        },
+    )
     def create(self, request, *args, **kwargs):  # POST /prestamos/ → servicio
         entrada = PrestarSerializer(data=request.data)
         entrada.is_valid(raise_exception=True)
-        try:
-            prestamo = services.prestar(entrada.validated_data["ejemplar_id"], request.user)
-        except Ejemplar.DoesNotExist:
-            return Response(
-                {"ejemplar_id": [_("No existe ese ejemplar.")]}, status=status.HTTP_400_BAD_REQUEST
-            )
-        except services.EjemplarNoDisponible as error:
-            return conflicto(error)
-        except services.LimitePrestamosAlcanzado as error:  # el máximo del perfil (módulo 15)
-            return Response({"detail": str(error)}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        # EjemplarNoDisponible → 409 con su código: lo traduce el exception handler (módulo 38)
+        prestamo = services.prestar(entrada.validated_data["ejemplar_id"], request.user)
         prestamo = self.get_queryset().get(pk=prestamo.pk)  # fecha_inicio la pone la BD
         return Response(self.get_serializer(prestamo).data, status=status.HTTP_201_CREATED)
 
+    @extend_schema(request=None, responses={200: PrestamoSerializer, 409: ProblemaSerializer})
     @action(detail=True, methods=["post"])  # POST /prestamos/{pk}/devolver/
     def devolver(self, request, pk=None, **kwargs):
-        try:
-            prestamo = services.devolver(self.get_object())  # get_object: ajeno → 404
-        except services.PrestamoYaDevuelto:
-            return conflicto(_("El préstamo ya estaba devuelto."))
+        prestamo = services.devolver(self.get_object())  # PrestamoYaDevuelto → 409
         return Response(self.get_serializer(prestamo).data)
 
+    @extend_schema(request=None, responses={200: PrestamoSerializer, 409: ProblemaSerializer})
     @action(detail=True, methods=["post"])  # POST /prestamos/{pk}/renovar/
     def renovar(self, request, pk=None, **kwargs):
-        try:
-            prestamo = services.renovar(self.get_object())
-        except services.PrestamoNoRenovable as error:
-            return conflicto(error)
+        prestamo = services.renovar(self.get_object())  # PrestamoNoRenovable → 409
         return Response(self.get_serializer(prestamo).data)
+
+    @extend_schema(responses={(200, "text/csv"): OpenApiTypes.STR})
+    @action(detail=False, methods=["get"])  # GET /prestamos/exportar/?estado=…&desde=…
+    def exportar(self, request, **kwargs):
+        """CSV en streaming con los MISMOS filtros que el listado: exportas lo que ves."""
+        filas = (
+            self.filter_queryset(self.get_queryset())
+            .order_by("-fecha_inicio", "-id")
+            .values_list("id", "ejemplar__libro__titulo", "socio__email", "fecha_inicio", "estado")
+            .iterator(chunk_size=2000)  # memoria constante aunque sean 500.000
+        )
+        escritor = csv.writer(Eco(), delimiter=";")
+
+        def generar():
+            yield escritor.writerow(["id", "libro", "socio", "inicio", "estado"])
+            for pk, titulo, email, inicio, estado in filas:
+                yield escritor.writerow([pk, titulo, email, inicio.isoformat(), estado])
+
+        response = StreamingHttpResponse(generar(), content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = 'attachment; filename="prestamos.csv"'
+        return response
 
     @action(detail=False, methods=["get"])  # GET /prestamos/vencidos/
     def vencidos(self, request, **kwargs):

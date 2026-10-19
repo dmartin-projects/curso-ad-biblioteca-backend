@@ -104,3 +104,36 @@ def health_ready(request):  # ¿puede atender? (BD y caché)
         estado["cache"] = "error"
     ok = all(v == "ok" for v in estado.values())
     return JsonResponse(estado, status=200 if ok else 503)
+
+
+# ── módulo 38: errores fuera de DRF con el mismo formato, solo bajo /api/ ──
+from django.utils.translation import gettext as _  # noqa: E402
+from django.views.defaults import page_not_found, server_error  # noqa: E402
+
+from .middleware import request_id_var  # noqa: E402
+
+
+def _problema_json(status, tipo, titulo):
+    return JsonResponse(
+        {
+            "type": tipo,
+            "title": titulo,
+            "status": status,
+            "detail": None,
+            "errors": None,
+            "request_id": request_id_var.get(),
+        },
+        status=status,
+    )
+
+
+def error_404(request, exception):
+    if request.path.startswith("/api/"):
+        return _problema_json(404, "no_encontrado", _("El recurso no existe."))
+    return page_not_found(request, exception)
+
+
+def error_500(request):
+    if request.path.startswith("/api/"):
+        return _problema_json(500, "error_interno", _("Ha ocurrido un error inesperado."))
+    return server_error(request)

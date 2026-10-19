@@ -139,7 +139,7 @@ def test_prestar_por_api(api, socio):
 )
 def test_prestar_entrada_invalida(api, cuerpo, error):
     r = api.post("/api/v1/prestamos/", cuerpo)
-    assert r.status_code == 400 and error in r.json()
+    assert r.status_code == 400 and error in r.json()["errors"]  # formato del módulo 38
 
 
 def test_el_cliente_no_elige_socio_ni_fecha(api, socio):

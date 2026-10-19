@@ -197,7 +197,7 @@ def test_completar_valida_la_password_sin_gastar_el_enlace(api, registrar, passw
     registrar("luisgarcia@example.com", nombre="Luis")
     uid, token = enlace_del_email()
     r = completar(api, uid, token, password)
-    assert r.status_code == 400 and fragmento in " ".join(r.json()["password"])
+    assert r.status_code == 400 and fragmento in " ".join(r.json()["errors"]["password"])
     assert completar(api, uid, token, "otra-clave-larga-9").status_code == 204  # sigue valiendo
 
 
@@ -255,7 +255,7 @@ def test_cambiar_password_cierra_las_sesiones(api, ana):
     refresh = api.cookies["refresh"].value
     api.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
     r = api.post("/api/v1/auth/cambiar-password/", {"actual": "mala", "nueva": "nueva-clave-456"})
-    assert r.status_code == 400 and "actual" in r.json()
+    assert r.status_code == 400 and "actual" in r.json()["errors"]
     r = api.post("/api/v1/auth/cambiar-password/", {"actual": CLAVE, "nueva": "nueva-clave-456"})
     assert r.status_code == 204
     assert api.get("/api/v1/auth/me/").status_code == 401  # el access de antes ya no vale
@@ -279,7 +279,7 @@ def test_recuperar_y_el_enlace_es_de_un_solo_uso(api, ana, django_capture_on_com
     uid, token = enlace_del_email()
     url = "/api/v1/auth/recuperar-password/confirmar/"
     r = api.post(url, {"uid": uid, "token": token, "password": "123"})
-    assert r.status_code == 400 and "password" in r.json()  # validadores de Django → 400, no 500
+    assert r.status_code == 400 and "password" in r.json()["errors"]  # Django → 400, no 500
     assert (
         api.post(url, {"uid": uid, "token": token, "password": "otra-mas-segura-7"}).status_code
         == 204

@@ -1,7 +1,8 @@
 # prestamos/api/serializers.py
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
-from catalogo.models import Libro
+from catalogo.models import Ejemplar, Libro
 from prestamos.models import Prestamo
 
 
@@ -9,6 +10,11 @@ class PrestarSerializer(serializers.Serializer):
     """ENTRADA: lo único que el cliente puede decidir. El socio es quien llama."""
 
     ejemplar_id = serializers.IntegerField(min_value=1)
+
+    def validate_ejemplar_id(self, valor):
+        if not Ejemplar.objects.filter(pk=valor).exists():
+            raise serializers.ValidationError(_("No existe ese ejemplar."))
+        return valor
 
 
 class LibroMiniSerializer(serializers.ModelSerializer):

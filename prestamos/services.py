@@ -8,17 +8,16 @@ from django.utils.translation import gettext as _
 from catalogo.models import Ejemplar
 from usuarios.models import PerfilSocio, Usuario
 
+# Las excepciones viven en exceptions.py (módulo 38); se siguen pudiendo importar desde aquí
+from .exceptions import (
+    EjemplarNoDisponible,
+    LimitePrestamosAlcanzado,
+    PrestamoNoRenovable,
+    PrestamoYaDevuelto,
+)
 from .models import Multa, Prestamo
 from .multas import importe_multa
 from .tasks import enviar_confirmacion_prestamo
-
-
-class EjemplarNoDisponible(Exception):
-    pass
-
-
-class LimitePrestamosAlcanzado(Exception):
-    pass
 
 
 def informe_socios():
@@ -76,16 +75,12 @@ def prestar(ejemplar_id: int, socio) -> Prestamo:
 from .signals import prestamo_devuelto, prestamo_vencido  # noqa: E402
 
 
-class PrestamoYaDevuelto(Exception):
-    pass
-
-
 @transaction.atomic
 def devolver(prestamo: Prestamo) -> Prestamo:
     # select_for_update: dos devoluciones simultáneas no pueden pasar las dos la comprobación
     prestamo = Prestamo.objects.select_for_update().get(pk=prestamo.pk)
     if prestamo.estado == Prestamo.Estado.DEVUELTO:
-        raise PrestamoYaDevuelto(prestamo.pk)
+        raise PrestamoYaDevuelto(prestamo_id=prestamo.pk)
 
     prestamo.estado = Prestamo.Estado.DEVUELTO
     prestamo.fecha_devolucion = timezone.now()
@@ -104,18 +99,16 @@ def devolver(prestamo: Prestamo) -> Prestamo:
     return prestamo
 
 
-class PrestamoNoRenovable(Exception):
-    pass
-
-
 @transaction.atomic
 def renovar(prestamo: Prestamo) -> Prestamo:
     """Amplía el plazo DURACION días. Solo préstamos activos y que aún no han vencido."""
     prestamo = Prestamo.objects.select_for_update().get(pk=prestamo.pk)
     if prestamo.estado != Prestamo.Estado.ACTIVO:
-        raise PrestamoNoRenovable(_("Solo se renuevan préstamos activos."))
+        raise PrestamoNoRenovable(_("Solo se renuevan préstamos activos."), prestamo_id=prestamo.pk)
     if prestamo.fecha_limite < timezone.now():
-        raise PrestamoNoRenovable(_("Un préstamo vencido no se renueva: devuélvelo."))
+        raise PrestamoNoRenovable(
+            _("Un préstamo vencido no se renueva: devuélvelo."), prestamo_id=prestamo.pk
+        )
     prestamo.fecha_limite += Prestamo.DURACION
     prestamo.save(update_fields=["fecha_limite"])
     return prestamo

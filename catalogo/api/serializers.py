@@ -1,4 +1,5 @@
 # catalogo/api/serializers.py
+from django.core.validators import FileExtensionValidator
 from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -7,6 +8,7 @@ from rest_framework import serializers
 from catalogo.busqueda import actualizar_busqueda
 from catalogo.fields import ISBNField
 from catalogo.models import Autor, Autoria, Genero, Libro
+from core.validators import TamanoMaximoValidator, TipoRealValidator
 
 from .fields import ISBNSerializerField
 
@@ -119,3 +121,25 @@ class LibroSerializer(BaseSerializer):
         if generos is not None:
             libro.generos.set(generos)
         return libro
+
+
+class PortadaSerializer(serializers.ModelSerializer):
+    """PUT /libros/{id}/portada/ (multipart)."""
+
+    # Declarar el campo sustituye a los validadores del modelo: se repiten los del módulo 20
+    portada = serializers.ImageField(
+        validators=[
+            FileExtensionValidator(["jpg", "jpeg", "png", "webp"]),
+            TamanoMaximoValidator(2),
+            TipoRealValidator(["image/jpeg", "image/png", "image/webp"]),
+        ]
+    )
+
+    class Meta:
+        model = Libro
+        fields = ["portada"]
+
+    def to_representation(self, libro):
+        request = self.context.get("request")
+        url = libro.portada.url if libro.portada else None
+        return {"portada": request.build_absolute_uri(url) if (url and request) else url}

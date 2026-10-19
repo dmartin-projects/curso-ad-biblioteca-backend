@@ -1,0 +1,1687 @@
+openapi: 3.0.3
+info:
+  title: API de la Biblioteca
+  version: 1.0.0
+paths:
+  /api/v1/auth/cambiar-password/:
+    post:
+      operationId: auth_cambiar_password_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CambiarPasswordRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CambiarPasswordRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/auth/completar-registro/:
+    post:
+      operationId: auth_completar_registro_create
+      description: 'Base para login/refresh/registro: no autentica la petición, pero
+        responde 401 (no 403).'
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompletarRegistroRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CompletarRegistroRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+          description: ''
+  /api/v1/auth/login/:
+    post:
+      operationId: auth_login_create
+      description: 'Base para login/refresh/registro: no autentica la petición, pero
+        responde 401 (no 403).'
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Access'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+          description: ''
+  /api/v1/auth/logout/:
+    post:
+      operationId: auth_logout_create
+      description: 'Base para login/refresh/registro: no autentica la petición, pero
+        responde 401 (no 403).'
+      tags:
+      - auth
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/v1/auth/me/:
+    get:
+      operationId: auth_me_retrieve
+      description: 'GET/PATCH /api/v1/auth/me/: el usuario autenticado, sin id en
+        la URL (no hay IDOR posible).'
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+          description: ''
+    patch:
+      operationId: auth_me_partial_update
+      description: 'GET/PATCH /api/v1/auth/me/: el usuario autenticado, sin id en
+        la URL (no hay IDOR posible).'
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUsuarioRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUsuarioRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+          description: ''
+  /api/v1/auth/recuperar-password/:
+    post:
+      operationId: auth_recuperar_password_create
+      description: 'Base para login/refresh/registro: no autentica la petición, pero
+        responde 401 (no 403).'
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EmailRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+          description: ''
+  /api/v1/auth/recuperar-password/confirmar/:
+    post:
+      operationId: auth_recuperar_password_confirmar_create
+      description: 'Base para login/refresh/registro: no autentica la petición, pero
+        responde 401 (no 403).'
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmarRecuperacionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ConfirmarRecuperacionRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+          description: ''
+  /api/v1/auth/refresh/:
+    post:
+      operationId: auth_refresh_create
+      description: 'Base para login/refresh/registro: no autentica la petición, pero
+        responde 401 (no 403).'
+      tags:
+      - auth
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Access'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+          description: ''
+  /api/v1/auth/registro/:
+    post:
+      operationId: auth_registro_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistroRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RegistroRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+          description: ''
+  /api/v1/autores/:
+    get:
+      operationId: autores_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Qué campo usar para ordenar los resultados.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Un número de página dentro del conjunto de resultados paginado.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Número de resultados a devolver por página.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: Un término de búsqueda.
+        schema:
+          type: string
+      tags:
+      - autores
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAutorList'
+          description: ''
+    post:
+      operationId: autores_create
+      tags:
+      - autores
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AutorRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AutorRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Autor'
+          description: ''
+  /api/v1/autores/{slug}/:
+    get:
+      operationId: autores_retrieve
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - autores
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Autor'
+          description: ''
+    put:
+      operationId: autores_update
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - autores
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AutorRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AutorRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Autor'
+          description: ''
+    patch:
+      operationId: autores_partial_update
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - autores
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAutorRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAutorRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Autor'
+          description: ''
+    delete:
+      operationId: autores_destroy
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - autores
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/estadisticas/:
+    get:
+      operationId: estadisticas_retrieve
+      tags:
+      - estadisticas
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Estadisticas'
+          description: ''
+  /api/v1/estadisticas-cbv/:
+    get:
+      operationId: estadisticas_cbv_retrieve
+      tags:
+      - estadisticas-cbv
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Estadisticas'
+          description: ''
+  /api/v1/generos/:
+    get:
+      operationId: generos_list
+      description: 'Permisos de modelo de Django: se gestionan desde el admin asignando
+        grupos (módulo 36).'
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Qué campo usar para ordenar los resultados.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: Un término de búsqueda.
+        schema:
+          type: string
+      tags:
+      - generos
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Genero'
+          description: ''
+    post:
+      operationId: generos_create
+      description: 'Permisos de modelo de Django: se gestionan desde el admin asignando
+        grupos (módulo 36).'
+      tags:
+      - generos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GeneroRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GeneroRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Genero'
+          description: ''
+  /api/v1/generos/{id}/:
+    get:
+      operationId: generos_retrieve
+      description: 'Permisos de modelo de Django: se gestionan desde el admin asignando
+        grupos (módulo 36).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este genero.
+        required: true
+      tags:
+      - generos
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Genero'
+          description: ''
+    put:
+      operationId: generos_update
+      description: 'Permisos de modelo de Django: se gestionan desde el admin asignando
+        grupos (módulo 36).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este genero.
+        required: true
+      tags:
+      - generos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GeneroRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GeneroRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Genero'
+          description: ''
+    patch:
+      operationId: generos_partial_update
+      description: 'Permisos de modelo de Django: se gestionan desde el admin asignando
+        grupos (módulo 36).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este genero.
+        required: true
+      tags:
+      - generos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedGeneroRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedGeneroRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Genero'
+          description: ''
+    delete:
+      operationId: generos_destroy
+      description: 'Permisos de modelo de Django: se gestionan desde el admin asignando
+        grupos (módulo 36).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este genero.
+        required: true
+      tags:
+      - generos
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/libros/:
+    get:
+      operationId: libros_list
+      parameters:
+      - in: query
+        name: autor
+        schema:
+          type: string
+      - in: query
+        name: disponible
+        schema:
+          type: boolean
+      - in: query
+        name: genero
+        schema:
+          type: array
+          items:
+            type: integer
+        explode: true
+        style: form
+      - name: ordering
+        required: false
+        in: query
+        description: Qué campo usar para ordenar los resultados.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Un número de página dentro del conjunto de resultados paginado.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Número de resultados a devolver por página.
+        schema:
+          type: integer
+      - in: query
+        name: paginas_max
+        schema:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+      - in: query
+        name: paginas_min
+        schema:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+      - in: query
+        name: publicado_desde
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: publicado_hasta
+        schema:
+          type: string
+          format: date
+      - name: search
+        required: false
+        in: query
+        description: Un término de búsqueda.
+        schema:
+          type: string
+      - in: query
+        name: titulo
+        schema:
+          type: string
+      tags:
+      - libros
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLibroListaList'
+          description: ''
+    post:
+      operationId: libros_create
+      tags:
+      - libros
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LibroRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LibroRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Libro'
+          description: ''
+  /api/v1/libros/{id}/:
+    get:
+      operationId: libros_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este libro.
+        required: true
+      tags:
+      - libros
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Libro'
+          description: ''
+    put:
+      operationId: libros_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este libro.
+        required: true
+      tags:
+      - libros
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LibroRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LibroRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Libro'
+          description: ''
+    patch:
+      operationId: libros_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este libro.
+        required: true
+      tags:
+      - libros
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLibroRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLibroRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Libro'
+          description: ''
+    delete:
+      operationId: libros_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este libro.
+        required: true
+      tags:
+      - libros
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/libros/{id}/portada/:
+    get:
+      operationId: libros_portada_retrieve
+      description: GET descarga la portada; PUT (multipart, solo personal) la sustituye.
+        Módulo 38.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este libro.
+        required: true
+      tags:
+      - libros
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Portada'
+          description: ''
+    put:
+      operationId: libros_portada_update
+      description: GET descarga la portada; PUT (multipart, solo personal) la sustituye.
+        Módulo 38.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este libro.
+        required: true
+      tags:
+      - libros
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PortadaRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Portada'
+          description: ''
+  /api/v1/notificaciones/ws-ticket/:
+    post:
+      operationId: notificaciones_ws_ticket_create
+      description: 'Ticket de un solo uso para abrir el WebSocket: el JWT nunca viaja
+        en la URL.'
+      tags:
+      - notificaciones
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketWs'
+          description: ''
+  /api/v1/prestamos/:
+    get:
+      operationId: prestamos_list
+      description: 'Sin update ni destroy: un préstamo cambia solo con acciones de
+        negocio.'
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: El valor del cursor de paginación.
+        schema:
+          type: string
+      - in: query
+        name: desde
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: estado
+        schema:
+          type: string
+          enum:
+          - activo
+          - devuelto
+        description: |-
+          * `activo` - Activo
+          * `devuelto` - Devuelto
+      - in: query
+        name: socio
+        schema:
+          type: integer
+      tags:
+      - prestamos
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPrestamoList'
+          description: ''
+    post:
+      operationId: prestamos_create
+      description: 'Sin update ni destroy: un préstamo cambia solo con acciones de
+        negocio.'
+      tags:
+      - prestamos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrestarRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PrestarRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prestamo'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+          description: ''
+  /api/v1/prestamos/{id}/:
+    get:
+      operationId: prestamos_retrieve
+      description: 'Sin update ni destroy: un préstamo cambia solo con acciones de
+        negocio.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este préstamo.
+        required: true
+      tags:
+      - prestamos
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prestamo'
+          description: ''
+  /api/v1/prestamos/{id}/devolver/:
+    post:
+      operationId: prestamos_devolver_create
+      description: 'Sin update ni destroy: un préstamo cambia solo con acciones de
+        negocio.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este préstamo.
+        required: true
+      tags:
+      - prestamos
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prestamo'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+          description: ''
+  /api/v1/prestamos/{id}/renovar/:
+    post:
+      operationId: prestamos_renovar_create
+      description: 'Sin update ni destroy: un préstamo cambia solo con acciones de
+        negocio.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este préstamo.
+        required: true
+      tags:
+      - prestamos
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prestamo'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+          description: ''
+  /api/v1/prestamos/exportar/:
+    get:
+      operationId: prestamos_exportar_retrieve
+      description: 'CSV en streaming con los MISMOS filtros que el listado: exportas
+        lo que ves.'
+      tags:
+      - prestamos
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            text/csv:
+              schema:
+                type: string
+          description: ''
+  /api/v1/prestamos/vencidos/:
+    get:
+      operationId: prestamos_vencidos_retrieve
+      description: 'Sin update ni destroy: un préstamo cambia solo con acciones de
+        negocio.'
+      tags:
+      - prestamos
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prestamo'
+          description: ''
+components:
+  schemas:
+    Access:
+      type: object
+      properties:
+        access:
+          type: string
+          description: JWT de acceso; el refresh va en una cookie HttpOnly
+      required:
+      - access
+    Autor:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nombre:
+          type: string
+          maxLength: 200
+        apellidos:
+          type: string
+          maxLength: 200
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        nacimiento:
+          type: string
+          format: date
+          nullable: true
+      required:
+      - id
+      - nombre
+      - slug
+    AutorRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 200
+        apellidos:
+          type: string
+          maxLength: 200
+        nacimiento:
+          type: string
+          format: date
+          nullable: true
+      required:
+      - nombre
+    CambiarPasswordRequest:
+      type: object
+      properties:
+        actual:
+          type: string
+          writeOnly: true
+          minLength: 1
+        nueva:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - actual
+      - nueva
+    CompletarRegistroRequest:
+      type: object
+      properties:
+        uid:
+          type: string
+          minLength: 1
+        token:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - token
+      - uid
+    ConfirmarRecuperacionRequest:
+      type: object
+      properties:
+        uid:
+          type: string
+          minLength: 1
+        token:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - token
+      - uid
+    EmailRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+      required:
+      - email
+    Estadisticas:
+      type: object
+      description: Solo documenta la respuesta (drf-spectacular no puede deducirla
+        de un aggregate).
+      properties:
+        libros:
+          type: integer
+        con_ejemplares_disponibles:
+          type: integer
+      required:
+      - con_ejemplares_disponibles
+      - libros
+    EstadoPrestamoEnum:
+      enum:
+      - activo
+      - devuelto
+      type: string
+      description: |-
+        * `activo` - Activo
+        * `devuelto` - Devuelto
+    Genero:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nombre:
+          type: string
+          maxLength: 100
+        padre:
+          type: integer
+          nullable: true
+      required:
+      - id
+      - nombre
+    GeneroRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 100
+        padre:
+          type: integer
+          nullable: true
+      required:
+      - nombre
+    IdiomaEnum:
+      enum:
+      - es
+      - en
+      type: string
+      description: |-
+        * `es` - Español
+        * `en` - Inglés
+    Libro:
+      type: object
+      description: Objeto para leer (autores), ids para escribir (autores_ids).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        titulo:
+          type: string
+          maxLength: 300
+        isbn:
+          type: string
+          maxLength: 13
+        publicado:
+          type: string
+          format: date
+          nullable: true
+        paginas:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        sinopsis:
+          type: string
+        autores:
+          type: array
+          items:
+            $ref: '#/components/schemas/Autor'
+          readOnly: true
+        generos:
+          type: array
+          items:
+            type: integer
+      required:
+      - autores
+      - id
+      - isbn
+      - titulo
+    LibroLista:
+      type: object
+      description: Pocos campos para listados. Espera Libro.objects.para_listado().con_disponibles().
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        titulo:
+          type: string
+          maxLength: 300
+        isbn:
+          type: string
+          maxLength: 13
+        publicado:
+          type: string
+          format: date
+          nullable: true
+        autores:
+          type: array
+          items:
+            type: string
+        generos:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        ejemplares_disponibles:
+          type: integer
+          readOnly: true
+      required:
+      - autores
+      - ejemplares_disponibles
+      - generos
+      - id
+      - isbn
+      - titulo
+    LibroMini:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        titulo:
+          type: string
+          maxLength: 300
+        isbn:
+          type: string
+          maxLength: 13
+      required:
+      - id
+      - isbn
+      - titulo
+    LibroRequest:
+      type: object
+      description: Objeto para leer (autores), ids para escribir (autores_ids).
+      properties:
+        titulo:
+          type: string
+          minLength: 1
+          maxLength: 300
+        isbn:
+          type: string
+          minLength: 1
+          maxLength: 13
+        publicado:
+          type: string
+          format: date
+          nullable: true
+        paginas:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        sinopsis:
+          type: string
+        autores_ids:
+          type: array
+          items:
+            type: integer
+            writeOnly: true
+          writeOnly: true
+        generos:
+          type: array
+          items:
+            type: integer
+      required:
+      - autores_ids
+      - isbn
+      - titulo
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - email
+      - password
+    Mensaje:
+      type: object
+      properties:
+        detail:
+          type: string
+      required:
+      - detail
+    PaginatedAutorList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Autor'
+        total_pages:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+    PaginatedLibroListaList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/LibroLista'
+        total_pages:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+    PaginatedPrestamoList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Prestamo'
+    PatchedAutorRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 200
+        apellidos:
+          type: string
+          maxLength: 200
+        nacimiento:
+          type: string
+          format: date
+          nullable: true
+    PatchedGeneroRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 100
+        padre:
+          type: integer
+          nullable: true
+    PatchedLibroRequest:
+      type: object
+      description: Objeto para leer (autores), ids para escribir (autores_ids).
+      properties:
+        titulo:
+          type: string
+          minLength: 1
+          maxLength: 300
+        isbn:
+          type: string
+          minLength: 1
+          maxLength: 13
+        publicado:
+          type: string
+          format: date
+          nullable: true
+        paginas:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        sinopsis:
+          type: string
+        autores_ids:
+          type: array
+          items:
+            type: integer
+            writeOnly: true
+          writeOnly: true
+        generos:
+          type: array
+          items:
+            type: integer
+    PatchedUsuarioRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+          maxLength: 150
+        apellidos:
+          type: string
+          maxLength: 150
+        idioma:
+          $ref: '#/components/schemas/IdiomaEnum'
+        zona_horaria:
+          type: string
+          minLength: 1
+          maxLength: 50
+    Portada:
+      type: object
+      description: PUT /libros/{id}/portada/ (multipart).
+      properties:
+        portada:
+          type: string
+          format: uri
+          pattern: (?:jpg|jpeg|png|webp)$
+      required:
+      - portada
+    PortadaRequest:
+      type: object
+      description: PUT /libros/{id}/portada/ (multipart).
+      properties:
+        portada:
+          type: string
+          format: binary
+          pattern: (?:jpg|jpeg|png|webp)$
+      required:
+      - portada
+    Prestamo:
+      type: object
+      description: 'SALIDA: el préstamo con su libro anidado.'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        libro:
+          allOf:
+          - $ref: '#/components/schemas/LibroMini'
+          readOnly: true
+        ejemplar:
+          type: string
+          readOnly: true
+        estado:
+          allOf:
+          - $ref: '#/components/schemas/EstadoPrestamoEnum'
+          readOnly: true
+        fecha_inicio:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Fecha de inicio
+        fecha_limite:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Fecha límite
+        multa:
+          type: string
+          nullable: true
+          readOnly: true
+      required:
+      - ejemplar
+      - estado
+      - fecha_inicio
+      - fecha_limite
+      - id
+      - libro
+      - multa
+    PrestarRequest:
+      type: object
+      description: 'ENTRADA: lo único que el cliente puede decidir. El socio es quien
+        llama.'
+      properties:
+        ejemplar_id:
+          type: integer
+          minimum: 1
+      required:
+      - ejemplar_id
+    Problema:
+      type: object
+      description: El formato único de error de la API (core.api.exceptions).
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          nullable: true
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          nullable: true
+        request_id:
+          type: string
+      required:
+      - detail
+      - errors
+      - request_id
+      - status
+      - title
+      - type
+    RegistroRequest:
+      type: object
+      description: 'Solo datos que no son secretos: la contraseña se elige al completar
+        el registro.'
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+        nombre:
+          type: string
+          maxLength: 150
+        apellidos:
+          type: string
+          maxLength: 150
+      required:
+      - email
+    TicketWs:
+      type: object
+      properties:
+        ticket:
+          type: string
+        caduca_en:
+          type: integer
+          description: Segundos
+      required:
+      - caduca_en
+      - ticket
+    Usuario:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        nombre:
+          type: string
+          maxLength: 150
+        apellidos:
+          type: string
+          maxLength: 150
+        idioma:
+          $ref: '#/components/schemas/IdiomaEnum'
+        zona_horaria:
+          type: string
+          maxLength: 50
+        fecha_alta:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - email
+      - fecha_alta
+      - id
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

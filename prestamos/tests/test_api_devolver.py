@@ -54,7 +54,7 @@ def test_devolver_en_plazo(api):
     assert prestamo.ejemplar.estado == Ejemplar.Estado.DISPONIBLE
 
     r = api.post(f"/api/v1/prestamos/{prestamo.pk}/devolver/")
-    assert r.status_code == 409 and r.json() == {"detail": "El préstamo ya estaba devuelto."}
+    assert r.status_code == 409 and r.json()["type"] == "prestamo_ya_devuelto"  # módulo 38
 
 
 def test_devolver_tarde_genera_multa_como_cadena(api):

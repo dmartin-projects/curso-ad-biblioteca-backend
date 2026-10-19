@@ -1,11 +1,20 @@
 # catalogo/api/views.py
 from django.db.models import Count, Q
+from drf_spectacular.utils import extend_schema
+from rest_framework import serializers
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from catalogo.models import Ejemplar, Libro
+
+
+class EstadisticasSerializer(serializers.Serializer):
+    """Solo documenta la respuesta (drf-spectacular no puede deducirla de un aggregate)."""
+
+    libros = serializers.IntegerField()
+    con_ejemplares_disponibles = serializers.IntegerField()
 
 
 def _estadisticas() -> dict:
@@ -17,6 +26,7 @@ def _estadisticas() -> dict:
     )
 
 
+@extend_schema(responses=EstadisticasSerializer)
 @api_view(["GET"])
 @permission_classes([AllowAny])  # pública: lo declara explícitamente
 def estadisticas_catalogo(request, version):
@@ -26,16 +36,24 @@ def estadisticas_catalogo(request, version):
 class EstadisticasCatalogo(APIView):
     permission_classes = [AllowAny]
 
+    @extend_schema(responses=EstadisticasSerializer)
     def get(self, request, version):
         return Response(_estadisticas())
 
 
 # ── módulo 34: ViewSets ──
-from django.db.models import ProtectedError  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+from django.http import FileResponse  # noqa: E402
+from django.shortcuts import redirect  # noqa: E402
 from django.utils.translation import gettext as _  # noqa: E402
-from rest_framework import status, viewsets  # noqa: E402
+from rest_framework import viewsets  # noqa: E402
+from rest_framework.decorators import action  # noqa: E402
+from rest_framework.exceptions import NotFound  # noqa: E402
 from rest_framework.filters import OrderingFilter, UnaccentedSearchFilter  # noqa: E402
+from rest_framework.parsers import MultiPartParser  # noqa: E402
 from rest_framework.permissions import DjangoModelPermissions, IsAuthenticated  # noqa: E402
+from storages.backends.s3 import S3Storage  # noqa: E402
 
 from catalogo.models import Autor, Genero  # noqa: E402
 from core.permissions import EsBibliotecario, SoloLectura  # noqa: E402
@@ -46,6 +64,7 @@ from .serializers import (  # noqa: E402
     GeneroSerializer,
     LibroListaSerializer,
     LibroSerializer,
+    PortadaSerializer,
 )
 
 # módulo 36: cualquiera autenticado lee; solo el personal escribe
@@ -72,16 +91,28 @@ class LibroViewSet(viewsets.ModelViewSet):
         return qs
 
     def get_serializer_class(self):
-        return LibroListaSerializer if self.action == "list" else LibroSerializer
+        if self.action == "list":
+            return LibroListaSerializer
+        if self.action == "portada":
+            return PortadaSerializer
+        return LibroSerializer
 
-    def destroy(self, request, *args, **kwargs):
-        try:
-            return super().destroy(request, *args, **kwargs)
-        except ProtectedError:  # tiene ejemplares con préstamos: la BD lo impide (PROTECT)
-            return Response(
-                {"detail": _("El libro tiene préstamos registrados y no se puede borrar.")},
-                status=status.HTTP_409_CONFLICT,
-            )
+    @action(detail=True, methods=["get", "put"], parser_classes=[MultiPartParser])
+    def portada(self, request, pk=None, **kwargs):
+        """GET descarga la portada; PUT (multipart, solo personal) la sustituye. Módulo 38."""
+        libro = self.get_object()  # get_queryset + permisos (PUT no es SAFE → EsBibliotecario)
+        if request.method == "PUT":
+            serializer = self.get_serializer(libro, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()  # la signal del módulo 20 borra la antigua al confirmar
+            return Response(serializer.data)
+        if not libro.portada:
+            raise NotFound(_("Este libro no tiene portada."))
+        if isinstance(libro.portada.storage, S3Storage):
+            return redirect(libro.portada.url)  # URL firmada de 5 minutos (módulo 20)
+        return FileResponse(libro.portada.open("rb"), filename=Path(libro.portada.name).name)
+
+    # destroy: si tiene préstamos, ProtectedError → 409 "en_uso" (exception handler, módulo 38)
 
 
 class AutorViewSet(viewsets.ModelViewSet):

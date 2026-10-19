@@ -232,11 +232,21 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PAGINATION_CLASS": "core.pagination.PaginacionEstandar",
     "PAGE_SIZE": 20,
+    "EXCEPTION_HANDLER": "core.api.exceptions.manejador_errores",  # módulo 38: un formato único
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
 }
-# drf-spectacular revisa el esquema en `manage.py check`: las APIView sin serializer dan W002 y
-# `check --deploy --fail-level WARNING` (módulo 29) fallaría. Se documentan en el módulo 38.
-SILENCED_SYSTEM_CHECKS = ["drf_spectacular.W002"]  # ← quítalo en el módulo 38
+# ── OpenAPI (módulo 38) ──
+SPECTACULAR_SETTINGS = {
+    "TITLE": "API de la Biblioteca",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,  # esquemas distintos para petición y respuesta
+    "SCHEMA_PATH_PREFIX": r"/api/v[0-9]",
+    "ENUM_NAME_OVERRIDES": {
+        "EstadoPrestamoEnum": "prestamos.models.Prestamo.Estado",
+        "EstadoEjemplarEnum": "catalogo.models.Ejemplar.Estado",
+    },
+}
 
 # ── JWT (módulo 35) ──
 SIMPLE_JWT = {

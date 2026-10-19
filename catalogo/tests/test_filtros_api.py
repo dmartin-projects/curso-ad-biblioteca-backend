@@ -71,9 +71,9 @@ def test_filtros_de_libros(api, catalogo):
 
 def test_filtro_invalido_es_400(api, catalogo):
     r = api.get("/api/v1/libros/", {"publicado_desde": "ayer"})
-    assert r.status_code == 400 and "publicado_desde" in r.json()
+    assert r.status_code == 400 and "publicado_desde" in r.json()["errors"]  # formato del 38
     r = api.get("/api/v1/libros/", {"genero": 9999})
-    assert r.status_code == 400 and "genero" in r.json()
+    assert r.status_code == 400 and "genero" in r.json()["errors"]
 
 
 # ── 2. Búsqueda ──
@@ -160,5 +160,5 @@ def test_filtro_por_socio_ajeno_es_400(socio):
     api = APIClient()
     api.force_authenticate(socio)
     r = api.get("/api/v1/prestamos/", {"socio": otro.pk})
-    assert r.status_code == 400 and "socio" in r.json()  # ni siquiera confirma que existe
+    assert r.status_code == 400 and "socio" in r.json()["errors"]  # ni confirma que existe
     assert api.get("/api/v1/prestamos/", {"socio": socio.pk}).status_code == 200
