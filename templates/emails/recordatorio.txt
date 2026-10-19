@@ -1,0 +1,10 @@
+{% load prestamos_extras %}{% autoescape off %}{% saludo %}, {{ socio.nombre|default:socio.email }}:
+
+Estos préstamos vencen pronto:
+{% for p in prestamos %}
+- {{ p.ejemplar.libro.titulo }}: devolver antes del {{ p.fecha_limite|date:"d/m/Y" }} ({{ p.fecha_limite|dias_restantes }} días)
+{% endfor %}
+Puedes renovarlos desde tu cuenta: {{ site_url }}/prestamos/
+
+Este email se ha enviado automáticamente.
+{% endautoescape %}

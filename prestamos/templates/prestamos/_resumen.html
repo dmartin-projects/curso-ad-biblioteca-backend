@@ -1,0 +1,11 @@
+{# prestamos/templates/prestamos/_resumen.html #}
+{% load prestamos_extras %}
+{% if activos %}
+<ul>
+  {% for p in activos %}
+  <li>{{ p.ejemplar.libro.titulo }} — {{ p.fecha_limite|dias_restantes }} días</li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No tienes préstamos activos.</p>
+{% endif %}

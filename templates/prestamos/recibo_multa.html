@@ -1,0 +1,22 @@
+{# templates/prestamos/recibo_multa.html #}
+{% load prestamos_extras %}
+<html>
+<head>
+<style>
+  @page { size: A4; margin: 2cm; @bottom-right { content: "Página " counter(page) " de " counter(pages); } }
+  body { font-family: "DejaVu Sans", sans-serif; font-size: 11pt; }
+  table { width: 100%; border-collapse: collapse; }
+  td, th { border-bottom: 1px solid #ccc; padding: 6px; }
+</style>
+</head>
+<body>
+  <h1>Recibo de multa nº {{ multa.pk }}</h1>
+  <p>Socio: {{ multa.prestamo.socio.get_full_name }} ({{ multa.prestamo.socio.email }})</p>
+  <table>
+    <tr><th>Concepto</th><th>Importe</th></tr>
+    <tr><td>Retraso en «{{ multa.prestamo.ejemplar.libro.titulo }}»</td><td>{{ multa.importe_base|euros }}</td></tr>
+    <tr><td>Recargo</td><td>{{ multa.recargo|euros }}</td></tr>
+    <tr><th>Total</th><th>{{ multa.total|euros }}</th></tr>
+  </table>
+</body>
+</html>

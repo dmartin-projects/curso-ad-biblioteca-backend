@@ -2,7 +2,7 @@ from django.core import signing
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_GET, require_http_methods
 
 from . import services
 from .models import Prestamo
@@ -108,3 +108,25 @@ class RenovarPrestamo(LoginRequiredMixin, PermissionRequiredMixin, SingleObjectM
         except services.PrestamoNoRenovable as error:
             return JsonResponse({"error": str(error)}, status=409)
         return JsonResponse(prestamo_a_dict(prestamo))
+
+
+# ── módulo 21: recibo de multa en PDF ──
+from django.contrib.auth.decorators import login_required  # noqa: E402
+from django.http import HttpResponse  # noqa: E402
+
+from .models import Multa  # noqa: E402
+from .pdf import recibo_multa_pdf  # noqa: E402
+
+
+@login_required
+@require_GET
+def descargar_recibo(request, pk):
+    multas = Multa.objects.select_related("prestamo__socio", "prestamo__ejemplar__libro")
+    if not request.user.has_perm("prestamos.view_prestamo"):  # el socio solo ve las suyas
+        multas = multas.filter(prestamo__socio=request.user)
+    multa = get_object_or_404(multas, pk=pk)  # ajena → 404, no 403: no revela que existe
+    return HttpResponse(
+        recibo_multa_pdf(multa),
+        content_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="recibo-{pk}.pdf"'},
+    )

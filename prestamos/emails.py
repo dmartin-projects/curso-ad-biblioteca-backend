@@ -1,0 +1,44 @@
+# prestamos/emails.py — composición de emails (módulo 22)
+from email.headerregistry import Address
+
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+
+from .pdf import recibo_multa_pdf
+
+
+def destinatario(usuario) -> Address:
+    """Nunca f"{nombre} <{email}>": un nombre con saltos de línea inyectaría cabeceras."""
+    return Address(display_name=usuario.get_full_name(), addr_spec=usuario.email)
+
+
+def crear_recordatorio(socio, prestamos) -> EmailMultiAlternatives:
+    contexto = {"socio": socio, "prestamos": prestamos, "site_url": settings.SITE_URL}
+    mensaje = EmailMultiAlternatives(
+        subject="Tus préstamos vencen pronto",
+        body=render_to_string("emails/recordatorio.txt", contexto),
+        to=[destinatario(socio)],
+        reply_to=["biblioteca@biblioteca.example"],
+        headers={"List-Unsubscribe": "<mailto:baja@biblioteca.example>"},
+    )
+    mensaje.attach_alternative(render_to_string("emails/recordatorio.html", contexto), "text/html")
+    return mensaje
+
+
+def enviar_recordatorio(socio, prestamos) -> None:
+    crear_recordatorio(socio, prestamos).send()
+
+
+def enviar_recibo_multa(multa) -> None:
+    socio = multa.prestamo.socio
+    mensaje = EmailMultiAlternatives(
+        subject=f"Recibo de la multa nº {multa.pk}",
+        body=(
+            f"Hola {socio.get_short_name()}:\n\n"
+            "Te adjuntamos el recibo de tu multa en PDF.\n\nBiblioteca"
+        ),
+        to=[destinatario(socio)],
+    )
+    mensaje.attach(f"recibo-{multa.pk}.pdf", recibo_multa_pdf(multa), "application/pdf")
+    mensaje.send()

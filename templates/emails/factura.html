@@ -1,0 +1,10 @@
+{# templates/emails/factura.html #}
+{% partialdef linea %}
+  <tr><td>{{ concepto }}</td><td style="text-align:right">{{ importe|floatformat:2 }} €</td></tr>
+{% endpartialdef %}
+
+<table>
+  {% for l in lineas %}
+    {% with concepto=l.concepto importe=l.importe %}{% partial linea %}{% endwith %}
+  {% endfor %}
+</table>

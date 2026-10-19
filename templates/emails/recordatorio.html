@@ -1,0 +1,9 @@
+{# templates/emails/recordatorio.html #}
+{% extends "emails/base.html" %}
+{% load prestamos_extras %}
+{% block contenido %}
+  <p>{% saludo %}, {{ socio.nombre|default:socio.email }}:</p>
+  <p>{% with total=prestamos|length %}Tienes {{ total }} préstamo{{ total|pluralize }} que vence{{ total|pluralize:"n" }} pronto:{% endwith %}</p>
+  {% include "emails/_tabla_prestamos.html" with prestamos=prestamos only %}
+  <p>Puedes renovarlos desde <a href="{{ site_url }}/prestamos/" style="color:#1a4d8f;">tu cuenta</a>.</p>
+{% endblock %}

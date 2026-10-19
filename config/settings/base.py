@@ -94,6 +94,8 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
+# URL pública del backend: enlaces absolutos en emails y base_url de los PDF (módulo 21)
+SITE_URL = env("SITE_URL", default="http://localhost:8000")
 
 # ── Archivos (módulo 20) ──
 STORAGES = {
@@ -138,3 +140,5 @@ PASSWORD_RESET_TIMEOUT = 60 * 60 * 24
 
 # Emails: de momento se imprimen en la consola de runserver (módulo 22: Mailpit y SMTP)
 MAILERS = {"default": {"BACKEND": "django.core.mail.backends.console.EmailBackend"}}
+DEFAULT_FROM_EMAIL = '"Biblioteca" <no-responder@biblioteca.example>'
+SERVER_EMAIL = "errores@biblioteca.example"

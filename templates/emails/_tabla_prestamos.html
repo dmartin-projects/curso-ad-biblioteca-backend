@@ -1,0 +1,16 @@
+{# templates/emails/_tabla_prestamos.html #}
+{% load prestamos_extras %}
+<table role="presentation" width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;">
+  <tr>
+    <th align="left" style="border-bottom:2px solid #1a4d8f;">Libro</th>
+    <th align="left" style="border-bottom:2px solid #1a4d8f;">Devolver antes del</th>
+    <th align="right" style="border-bottom:2px solid #1a4d8f;">Días</th>
+  </tr>
+  {% for p in prestamos %}
+  <tr>
+    <td style="border-bottom:1px solid #dddddd;">{{ p.ejemplar.libro.titulo }}</td>
+    <td style="border-bottom:1px solid #dddddd;">{{ p.fecha_limite|date:"d/m/Y" }}</td>
+    <td align="right" style="border-bottom:1px solid #dddddd;">{{ p.fecha_limite|dias_restantes }}</td>
+  </tr>
+  {% endfor %}
+</table>
