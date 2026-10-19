@@ -2,6 +2,7 @@ from pathlib import Path
 
 import environ
 from celery.schedules import crontab
+from django.utils.csp import CSP
 from django.utils.translation import gettext_lazy as _
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent  # .../backend
@@ -24,7 +25,7 @@ DJANGO_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.postgres",
 ]
-THIRD_PARTY_APPS = ["channels", "django_tasks_db"]
+THIRD_PARTY_APPS = ["channels", "django_tasks_db", "corsheaders"]
 LOCAL_APPS = [
     "core",
     "usuarios",
@@ -55,6 +56,7 @@ CHANNEL_LAYERS = {
 MIDDLEWARE = [
     "core.middleware.RequestIdMiddleware",  # lo primero: el id existe para todo lo demás
     "core.middleware.TiempoRespuestaMiddleware",  # y mide la petición completa
+    "corsheaders.middleware.CorsMiddleware",  # lo más arriba posible (responde a los OPTIONS)
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # justo después de Security
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -65,6 +67,7 @@ MIDDLEWARE = [
     "core.middleware.zona_horaria_middleware",  # después de Auth (usa request.user)
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django.middleware.csp.ContentSecurityPolicyMiddleware",  # módulo 29
     "core.middleware.MantenimientoMiddleware",
     "core.middleware.PeticionesLentasMiddleware",  # después de Auth (usa request.user)
 ]
@@ -80,6 +83,7 @@ TEMPLATES = [
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
+                "django.template.context_processors.csp",  # {{ csp_nonce }} en plantillas
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
@@ -178,6 +182,21 @@ MAILERS = {"default": {"BACKEND": "django.core.mail.backends.console.EmailBacken
 DEFAULT_FROM_EMAIL = '"Biblioteca" <no-responder@biblioteca.example>'
 SERVER_EMAIL = "errores@biblioteca.example"
 
+
+# ── Seguridad (módulo 29) ──
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:4200"])
+CSP_POLITICA = {
+    "default-src": [CSP.SELF],
+    "script-src": [CSP.SELF, CSP.NONCE],
+    "style-src": [CSP.SELF, CSP.NONCE],
+    "img-src": [CSP.SELF, "data:", "https://covers.openlibrary.org"],
+    "connect-src": [CSP.SELF],
+    "frame-ancestors": [CSP.NONE],
+    "object-src": [CSP.NONE],
+    "base-uri": [CSP.SELF],
+}
+# En desarrollo, solo informa: el navegador avisa en la consola y envía un informe a /csp-report/
+SECURE_CSP_REPORT_ONLY = {**CSP_POLITICA, "report-uri": "/csp-report/"}
 
 # ── APIs externas (módulo 27) ──
 OPENLIBRARY_URL = env("OPENLIBRARY_URL", default="https://openlibrary.org")

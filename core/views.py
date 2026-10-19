@@ -1,10 +1,12 @@
 import json
+import logging
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
-from django.http import Http404, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods, require_POST
 
 from .models import Nota
 
@@ -56,3 +58,23 @@ def ultimas_notas() -> list[dict]:
     """Las 20 últimas notas con su objeto: 1 consulta + 1 por cada TIPO de objeto (no por nota)."""
     lista = Nota.objects.select_related("content_type")[:20].prefetch_related("objeto")
     return [{"texto": n.texto, "sobre": str(n.objeto), "tipo": n.content_type.model} for n in lista]
+
+
+# ── módulo 29: informes de violaciones de CSP ──
+csp_logger = logging.getLogger("seguridad.csp")
+
+
+@csrf_exempt  # ✅ justificado: lo envía el navegador sin token; no usa la sesión ni cambia nada
+@require_POST
+def csp_report(request):
+    try:
+        informe = json.loads(request.body or b"{}").get("csp-report", {})
+    except json.JSONDecodeError:
+        return HttpResponse(status=400)
+    csp_logger.warning(
+        "CSP: %s bloqueó %s en %s",
+        informe.get("violated-directive") or informe.get("effective-directive"),
+        informe.get("blocked-uri"),
+        informe.get("document-uri"),
+    )
+    return HttpResponse(status=204)

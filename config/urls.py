@@ -12,6 +12,7 @@ from . import views
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("health/", views.health, name="health"),
+    path("csp-report/", core_views.csp_report, name="csp_report"),
     path("catalogo/", include("catalogo.urls")),
     path("prestamos/", include("prestamos.urls")),
     path("notas/<str:app>/<str:modelo>/<int:pk>/", core_views.notas, name="notas"),

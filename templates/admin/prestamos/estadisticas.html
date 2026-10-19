@@ -9,4 +9,6 @@
   <table>
     {% for libro in mas_prestados %}<tr><td>{{ libro.titulo }}</td><td>{{ libro.n }}</td></tr>{% endfor %}
   </table>
+  {# módulo 29: un script en línea solo se ejecuta con la CSP si lleva el nonce de esta respuesta #}
+  <script nonce="{{ csp_nonce }}">console.log("estadísticas cargadas")</script>
 {% endblock %}
