@@ -45,7 +45,7 @@ def test_socio_lee_pero_no_escribe(socio):
     assert api.patch(f"/api/v1/libros/{libro.pk}/", {"titulo": "X"}).status_code == 403
 
 
-def test_bibliotecario_crea_y_edita_pero_no_borra():
+def test_bibliotecario_crea_edita_y_borra():
     api = cliente(UsuarioFactory(), "bibliotecarios")
     autor = AutorFactory()
     r = api.post(
@@ -57,9 +57,8 @@ def test_bibliotecario_crea_y_edita_pero_no_borra():
     assert api.patch(f"/api/v1/libros/{pk}/", {"titulo": "Dune (2026)"}).json()["titulo"] == (
         "Dune (2026)"
     )
-    assert api.delete(f"/api/v1/libros/{pk}/").status_code == 403  # su grupo no tiene delete_libro
-    admin = cliente(UsuarioFactory(is_superuser=True))
-    assert admin.delete(f"/api/v1/libros/{pk}/").status_code == 204
+    # Módulo 36: EsBibliotecario sustituye a DjangoModelPermissions (con él, era 403)
+    assert api.delete(f"/api/v1/libros/{pk}/").status_code == 204
 
 
 def test_borrar_libro_con_prestamos_es_409():
@@ -73,15 +72,8 @@ def test_borrar_libro_con_prestamos_es_409():
 # ── 2. AutorViewSet por slug ──
 def test_autor_por_slug():
     AutorFactory(nombre="Frank Herbert", slug="frank-herbert")
-    assert (
-        cliente(UsuarioFactory(), "bibliotecarios")
-        .post(  # no tiene add_autor
-            "/api/v1/autores/", {"nombre": "X"}
-        )
-        .status_code
-        == 403
-    )
-    api = cliente(UsuarioFactory(is_superuser=True))
+    assert cliente(UsuarioFactory()).post("/api/v1/autores/", {"nombre": "X"}).status_code == 403
+    api = cliente(UsuarioFactory(), "bibliotecarios")  # desde el módulo 36 (antes: sin add_autor)
     assert api.get("/api/v1/autores/frank-herbert/").json()["nombre"] == "Frank Herbert"
     r = api.post("/api/v1/autores/", {"nombre": "Ursula K. Le Guin"})
     assert r.status_code == 201 and r.json()["slug"] == "ursula-k-le-guin"
@@ -119,7 +111,9 @@ def test_vencido_no_se_renueva_y_aparece_en_vencidos(socio):
     PrestamoFactory(vencido=True)  # de otro socio
     api = cliente(socio)
     assert api.post(f"/api/v1/prestamos/{vencido.pk}/renovar/").status_code == 409
-    assert [p["id"] for p in api.get("/api/v1/prestamos/vencidos/").json()] == [vencido.pk]
+    assert api.get("/api/v1/prestamos/vencidos/").status_code == 403  # módulo 36: solo personal
+    biblio = cliente(UsuarioFactory(), "bibliotecarios")
+    assert len(biblio.get("/api/v1/prestamos/vencidos/").json()) == 2  # los de todos
 
 
 def test_ajeno_da_404_y_el_bibliotecario_lo_ve_todo(socio):
@@ -134,7 +128,7 @@ def test_listado_de_prestamos_sin_n_mas_1(socio, django_assert_num_queries):
     for prestamo in PrestamoFactory.create_batch(10, socio=socio, vencido=True)[:3]:
         Multa.objects.create(prestamo=prestamo, importe_base=Decimal("1.50"))
     api = cliente(socio)
-    with django_assert_num_queries(3):  # grupos+permisos del usuario (has_perm) y préstamos
+    with django_assert_num_queries(2):  # ¿es personal? (grupos) + préstamos con libro y multa
         assert len(api.get("/api/v1/prestamos/").json()) == 10
 
 

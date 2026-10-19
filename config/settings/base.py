@@ -199,8 +199,18 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",  # API navegable / admin
     ],
     # Límites para los endpoints sensibles (módulo 35; se explica en el 36)
-    "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.ScopedRateThrottle"],
-    "DEFAULT_THROTTLE_RATES": {"login": "5/min", "registro": "5/hour", "recuperar": "3/hour"},
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",  # por IP (módulo 36)
+        "rest_framework.throttling.UserRateThrottle",  # por usuario
+        "rest_framework.throttling.ScopedRateThrottle",  # por ámbito (throttle_scope)
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "30/min",
+        "user": "300/min",
+        "login": "5/min",
+        "registro": "5/hour",
+        "recuperar": "3/hour",
+    },
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",  # ✅ cerrado por defecto
     ],

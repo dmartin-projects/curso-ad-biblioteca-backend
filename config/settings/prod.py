@@ -21,6 +21,9 @@ X_FRAME_OPTIONS = "DENY"
 SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])  # noqa: F405
 
+# ── Throttling detrás de Caddy/nginx (módulo 36): la IP real viene en X-Forwarded-For ──
+REST_FRAMEWORK = {**REST_FRAMEWORK, "NUM_PROXIES": 1}  # noqa: F405
+
 # ── CORS: solo los orígenes de la configuración ──
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])  # noqa: F405
 CORS_ALLOW_CREDENTIALS = True

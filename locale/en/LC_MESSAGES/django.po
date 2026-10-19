@@ -29,7 +29,7 @@ msgstr "Add at least one author."
 msgid "Hay autores repetidos."
 msgstr "There are duplicate authors."
 
-#: catalogo/api/views.py:64
+#: catalogo/api/views.py:71
 msgid "El libro tiene préstamos registrados y no se puede borrar."
 msgstr "The book has recorded loans and cannot be deleted."
 
@@ -53,6 +53,10 @@ msgstr "English"
 msgid "En mantenimiento"
 msgstr "Under maintenance"
 
+#: core/permissions.py:23
+msgid "Solo el personal de la biblioteca puede hacer esto."
+msgstr "Only library staff can do this."
+
 #: core/validators.py:15
 #, python-format
 msgid "El archivo supera %(megas)s MB."
@@ -62,11 +66,15 @@ msgstr "The file exceeds %(megas)s MB."
 msgid "El archivo no es un PDF válido."
 msgstr "The file is not a valid PDF."
 
-#: prestamos/api/views.py:44
+#: prestamos/api/views.py:24
+msgid "Solo el socio del préstamo o el personal pueden hacer esto."
+msgstr "Only the member who has the loan or the staff can do this."
+
+#: prestamos/api/views.py:62
 msgid "No existe ese ejemplar."
 msgstr "That copy does not exist."
 
-#: prestamos/api/views.py:56
+#: prestamos/api/views.py:74
 msgid "El préstamo ya estaba devuelto."
 msgstr "The loan had already been returned."
 

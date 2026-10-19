@@ -34,18 +34,25 @@ class EstadisticasCatalogo(APIView):
 from django.db.models import ProtectedError  # noqa: E402
 from django.utils.translation import gettext as _  # noqa: E402
 from rest_framework import status, viewsets  # noqa: E402
-from rest_framework.permissions import DjangoModelPermissions  # noqa: E402
+from rest_framework.permissions import DjangoModelPermissions, IsAuthenticated  # noqa: E402
 
-from catalogo.models import Autor  # noqa: E402
+from catalogo.models import Autor, Genero  # noqa: E402
+from core.permissions import EsBibliotecario, SoloLectura  # noqa: E402
 
-from .serializers import AutorSerializer, LibroListaSerializer, LibroSerializer  # noqa: E402
+from .serializers import (  # noqa: E402
+    AutorSerializer,
+    GeneroSerializer,
+    LibroListaSerializer,
+    LibroSerializer,
+)
+
+# módulo 36: cualquiera autenticado lee; solo el personal escribe
+LECTURA_O_PERSONAL = [IsAuthenticated & (SoloLectura | EsBibliotecario)]
 
 
 class LibroViewSet(viewsets.ModelViewSet):
-    # Leer: cualquier usuario autenticado. Crear/editar/borrar: quien tenga add/change/delete_libro
-    # (los bibliotecarios). Sin esto, cualquier socio podría borrar el catálogo. Más en el módulo 36.
-    permission_classes = [DjangoModelPermissions]
-    queryset = Libro.objects.none()  # DjangoModelPermissions lo usa para saber el modelo
+    permission_classes = LECTURA_O_PERSONAL  # (en el módulo 34: DjangoModelPermissions)
+    queryset = Libro.objects.none()  # para el esquema OpenAPI
 
     def get_queryset(self):
         qs = Libro.objects.prefetch_related("autores", "generos")
@@ -67,7 +74,7 @@ class LibroViewSet(viewsets.ModelViewSet):
 
 
 class AutorViewSet(viewsets.ModelViewSet):
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = LECTURA_O_PERSONAL
     queryset = Autor.objects.order_by("nombre")
     serializer_class = AutorSerializer
     lookup_field = "slug"  # /autores/frank-herbert/
@@ -76,3 +83,11 @@ class AutorViewSet(viewsets.ModelViewSet):
         from django.utils.text import slugify
 
         serializer.save(slug=slugify(serializer.validated_data["nombre"]))
+
+
+class GeneroViewSet(viewsets.ModelViewSet):
+    """Permisos de modelo de Django: se gestionan desde el admin asignando grupos (módulo 36)."""
+
+    permission_classes = [DjangoModelPermissions]
+    queryset = Genero.objects.select_related("padre").order_by("nombre")
+    serializer_class = GeneroSerializer

@@ -1,10 +1,13 @@
 # prestamos/api/views.py
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.response import Response
 
 from catalogo.models import Ejemplar
+from core.permissions import EsBibliotecario, es_personal
 from prestamos import services
 from prestamos.models import Prestamo
 
@@ -12,9 +15,16 @@ from .serializers import PrestamoSerializer, PrestarSerializer
 
 
 def prestamos_visibles(user):
-    """El socio, los suyos; el bibliotecario, todos (la regla del módulo 14)."""
+    """El socio, los suyos; el personal, todos (la regla del módulo 14)."""
     qs = Prestamo.objects.all()
-    return qs if user.has_perm("prestamos.view_prestamo") else qs.filter(socio=user)
+    return qs if es_personal(user) else qs.filter(socio=user)
+
+
+class EsSocioDelPrestamoOBibliotecario(BasePermission):
+    message = gettext_lazy("Solo el socio del préstamo o el personal pueden hacer esto.")
+
+    def has_object_permission(self, request, view, prestamo):
+        return prestamo.socio_id == request.user.id or es_personal(request.user)
 
 
 def conflicto(error: Exception) -> Response:
@@ -26,6 +36,14 @@ class PrestamoViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
 
     serializer_class = PrestamoSerializer
     queryset = Prestamo.objects.none()  # solo para el esquema OpenAPI: el real es get_queryset()
+
+    def get_permissions(self):
+        if self.action == "vencidos":
+            return [EsBibliotecario()]
+        if self.action in ("devolver", "renovar"):
+            # get_queryset ya deja fuera lo ajeno (404); esto es la segunda capa
+            return [IsAuthenticated(), EsSocioDelPrestamoOBibliotecario()]
+        return [IsAuthenticated()]
 
     def get_queryset(self):
         return (
