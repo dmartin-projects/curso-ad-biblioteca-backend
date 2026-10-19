@@ -174,6 +174,10 @@ DEFAULT_FROM_EMAIL = '"Biblioteca" <no-responder@biblioteca.example>'
 SERVER_EMAIL = "errores@biblioteca.example"
 
 
+# ── APIs externas (módulo 27) ──
+OPENLIBRARY_URL = env("OPENLIBRARY_URL", default="https://openlibrary.org")
+HTTP_USER_AGENT = env("HTTP_USER_AGENT", default="Biblioteca/1.0 (contacto@biblioteca.example)")
+
 # ── Tareas (módulo 26) ──
 # django.tasks: emails sencillos, cola en PostgreSQL (manage.py db_worker)
 TASKS = {

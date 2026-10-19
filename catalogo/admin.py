@@ -1,7 +1,9 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.db import transaction
 from django.db.models import Count, Exists, OuterRef
 
 from .models import Autor, Ejemplar, Genero, Libro
+from .tasks import completar_desde_openlibrary as tarea_completar
 
 
 class AutoriaInline(admin.TabularInline):  # en filas
@@ -38,6 +40,18 @@ class LibroAdmin(admin.ModelAdmin):
     readonly_fields = ["creado", "actualizado"]
     filter_horizontal = ["generos"]
     save_on_top = True
+    actions = ["completar_desde_openlibrary"]
+
+    @admin.action(description="Completar datos desde Open Library", permissions=["change"])
+    def completar_desde_openlibrary(self, request, queryset):
+        ids = list(queryset.values_list("pk", flat=True))
+        for libro_id in ids:  # una tarea por libro: se reparten entre workers y se reintentan solas
+            transaction.on_commit(lambda pk=libro_id: tarea_completar.delay(pk))
+        self.message_user(
+            request,
+            f"{len(ids)} libro(s) en cola. Se actualizarán en segundo plano.",
+            messages.INFO,
+        )
 
     def get_queryset(self, request):
         # Un número fijo de consultas para todo el listado: sin N+1

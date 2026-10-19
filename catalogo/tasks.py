@@ -1,10 +1,14 @@
 # catalogo/tasks.py — importación en lotes paralelos con un chord (módulo 26)
 from dataclasses import asdict
+from datetime import date
 
 from celery import chord, shared_task
 from django.utils import timezone
 
-from .models import Importacion
+from core.circuit_breaker import CircuitBreaker, CircuitoAbierto
+
+from .clients.openlibrary import OpenLibraryClient, OpenLibraryError
+from .models import Importacion, Libro
 from .servicios_importacion import importar_libros
 
 
@@ -36,3 +40,31 @@ def lanzar_importacion(filas: list[dict], tam_lote: int = 100) -> Importacion:
         resumen_importacion.s(importacion.pk),
     ).apply_async()
     return importacion
+
+
+# ── módulo 27: completar datos desde Open Library ──
+breaker_openlibrary = CircuitBreaker("openlibrary", umbral=5, enfriamiento=120)
+
+
+@shared_task(bind=True, rate_limit="60/m", max_retries=5)  # límite de uso en origen
+def completar_desde_openlibrary(self, libro_id: int) -> str:
+    libro = Libro.objects.get(pk=libro_id)
+    try:
+        datos = breaker_openlibrary.llamar(OpenLibraryClient().buscar_isbn, libro.isbn)
+    except CircuitoAbierto as exc:
+        raise self.retry(exc=exc, countdown=120)  # vuelve cuando el circuito se haya enfriado
+    except OpenLibraryError as exc:
+        raise self.retry(exc=exc, countdown=60)
+    if datos is None:
+        return "no encontrado"
+
+    cambios = []
+    if libro.paginas is None and datos.paginas:  # solo rellena huecos: no pisa lo editado a mano
+        libro.paginas = datos.paginas
+        cambios.append("paginas")
+    if libro.publicado is None and datos.anio:
+        libro.publicado = date(datos.anio, 1, 1)
+        cambios.append("publicado")
+    libro.metadatos = {**libro.metadatos, "openlibrary": {"autores": datos.autores}}
+    libro.save(update_fields=[*cambios, "metadatos"])
+    return f"actualizado: {', '.join(cambios) or 'nada'}"
