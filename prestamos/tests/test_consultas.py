@@ -60,7 +60,9 @@ def test_prestamo_manager(biblioteca):
     assert list(Prestamo.objects.activos()) == [en_plazo]
     assert list(Prestamo.objects.vencidos()) == []
     # ahora el de ana sigue activo y fuera de plazo (y el de luis, devuelto)
-    Prestamo.objects.filter(pk=en_plazo.pk).update(estado="devuelto", fecha_devolucion=timezone.now())
+    Prestamo.objects.filter(pk=en_plazo.pk).update(
+        estado="devuelto", fecha_devolucion=timezone.now()
+    )
     Prestamo.objects.filter(pk=vencido.pk).update(estado="activo", fecha_devolucion=None)
     assert list(Prestamo.objects.vencidos().de_socio(ana)) == [vencido]
     assert list(Prestamo.objects.vencidos().de_socio(luis)) == []
