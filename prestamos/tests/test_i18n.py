@@ -54,6 +54,22 @@ def test_errores_de_servicio_traducidos(prestamo):
     assert str(error.value) == "Copy D1 is not available"
 
 
+def test_errores_de_la_api_en_el_idioma_del_frontend(bibliotecario):
+    """Módulo 59: el build inglés de Angular manda Accept-Language: en. Los títulos de error
+    (módulo 38) y los validadores propios (módulo 05) llegan traducidos."""
+    from rest_framework.test import APIClient
+
+    client = APIClient()
+    client.force_authenticate(bibliotecario)
+    datos = {"titulo": "Dune", "isbn": "123", "autores_ids": []}
+    url = "/api/v1/libros/"
+    en = client.post(url, datos, format="json", headers={"accept-language": "en"}).json()
+    assert en["title"] == "The submitted data is not valid."
+    assert en["errors"]["isbn"] == ["The ISBN must have 13 digits."]
+    es = client.post(url, datos, format="json").json()
+    assert es["title"] == "Los datos enviados no son válidos."
+
+
 # ── 3. Emails en el idioma del socio ──
 def test_recordatorio_en_el_idioma_del_socio(prestamo, mailoutbox):
     socio = prestamo.socio
