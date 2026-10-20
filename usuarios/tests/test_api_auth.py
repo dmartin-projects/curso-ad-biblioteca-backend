@@ -288,3 +288,28 @@ def test_recuperar_y_el_enlace_es_de_un_solo_uso(api, ana, django_capture_on_com
         api.post(url, {"uid": uid, "token": token, "password": "y-otra-mas-8"}).status_code == 400
     )
     assert login(api, password="otra-mas-segura-7").status_code == 200
+
+
+# ── Módulo 51: /me/ dice al frontend qué puede hacer el usuario ──
+def test_me_incluye_permisos_y_si_es_personal(api, ana):
+    from django.contrib.auth.models import Group, Permission
+
+    api.credentials(HTTP_AUTHORIZATION=f"Bearer {login(api).json()['access']}")
+    datos = api.get("/api/v1/auth/me/").json()
+    assert datos["es_personal"] is False and datos["permisos"] == []
+
+    grupo, _ = Group.objects.get_or_create(name="bibliotecarios")
+    grupo.permissions.add(Permission.objects.get(codename="add_libro"))
+    ana.groups.add(grupo)
+    datos = api.get("/api/v1/auth/me/").json()
+    assert datos["es_personal"] is True
+    assert "catalogo.add_libro" in datos["permisos"]
+
+
+def test_me_no_deja_cambiar_permisos_con_patch(api, ana):
+    api.credentials(HTTP_AUTHORIZATION=f"Bearer {login(api).json()['access']}")
+    r = api.patch(
+        "/api/v1/auth/me/", {"es_personal": True, "permisos": ["catalogo.add_libro"]}, format="json"
+    )
+    assert r.status_code == 200
+    assert r.json()["es_personal"] is False and r.json()["permisos"] == []

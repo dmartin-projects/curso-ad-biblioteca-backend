@@ -1674,10 +1674,20 @@ components:
           type: string
           format: date-time
           readOnly: true
+        es_personal:
+          type: boolean
+          readOnly: true
+        permisos:
+          type: array
+          items:
+            type: string
+          readOnly: true
       required:
       - email
+      - es_personal
       - fecha_alta
       - id
+      - permisos
   securitySchemes:
     cookieAuth:
       type: apiKey

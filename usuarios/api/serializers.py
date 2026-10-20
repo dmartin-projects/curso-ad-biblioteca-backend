@@ -4,6 +4,8 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.translation import gettext as _
 from rest_framework import serializers
 
+from core.permissions import es_personal
+
 Usuario = get_user_model()
 
 
@@ -16,10 +18,31 @@ def validar_password(password: str, usuario) -> None:
 
 
 class UsuarioSerializer(serializers.ModelSerializer):
+    # Módulo 51: el frontend necesita saber qué puede hacer el usuario para mostrar u ocultar
+    # botones (*appSiPermiso) y menús. Solo es UX: la API sigue comprobando cada permiso.
+    es_personal = serializers.SerializerMethodField()
+    permisos = serializers.SerializerMethodField()
+
     class Meta:
         model = Usuario
-        fields = ["id", "email", "nombre", "apellidos", "idioma", "zona_horaria", "fecha_alta"]
+        fields = [
+            "id",
+            "email",
+            "nombre",
+            "apellidos",
+            "idioma",
+            "zona_horaria",
+            "fecha_alta",
+            "es_personal",
+            "permisos",
+        ]
         read_only_fields = ["id", "email", "fecha_alta"]  # el email no se cambia con un PATCH
+
+    def get_es_personal(self, usuario) -> bool:
+        return es_personal(usuario)
+
+    def get_permisos(self, usuario) -> list[str]:
+        return sorted(usuario.get_all_permissions())  # "catalogo.add_libro", …
 
 
 class RegistroSerializer(serializers.Serializer):
