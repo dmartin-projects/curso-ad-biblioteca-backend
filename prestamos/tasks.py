@@ -4,8 +4,11 @@ from datetime import timedelta
 from smtplib import SMTPException
 
 from celery import shared_task
+from django.conf import settings
 from django.tasks import task
 from django.utils import timezone
+
+from core.healthchecks import avisar_healthchecks
 
 from .emails import enviar_confirmacion
 from .emails import enviar_recordatorio as componer_y_enviar_recordatorio
@@ -67,4 +70,7 @@ def calcular_multas() -> int:
             multa.importe_base = importe  # crece cada día hasta que la paga
             multa.save(update_fields=["importe_base"])
         n += 1
+    avisar_healthchecks(
+        settings.HEALTHCHECK_MULTAS_URL
+    )  # solo si ha llegado hasta aquí (módulo 67)
     return n

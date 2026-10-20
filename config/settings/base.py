@@ -363,3 +363,6 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(hour=9, minute=0),
     },
 }
+
+# ── Monitorización de tareas periódicas (módulo 67): URL de ping de Healthchecks.io, o vacío ──
+HEALTHCHECK_MULTAS_URL = env("HEALTHCHECK_MULTAS_URL", default="")
