@@ -141,8 +141,8 @@ STORAGES = {
         "OPTIONS": {
             "bucket_name": env("S3_BUCKET", default="biblioteca"),
             "endpoint_url": env("S3_ENDPOINT_URL", default="http://localhost:9000"),
-            "access_key": env("S3_ACCESS_KEY", default="minio"),
-            "secret_key": env("S3_SECRET_KEY", default="minio12345"),
+            "access_key": env("S3_ACCESS_KEY", default="rustfs"),
+            "secret_key": env("S3_SECRET_KEY", default="rustfs12345"),
             "region_name": "us-east-1",
             "signature_version": "s3v4",  # firma v4: la v2 está obsoleta
             "default_acl": None,

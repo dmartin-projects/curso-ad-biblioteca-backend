@@ -106,7 +106,7 @@ def test_subida_requiere_staff(client, libro):
     assert not libro.portada
 
 
-# ── 2. S3 (MinIO en tu máquina; aquí, S3 simulado con moto) ──
+# ── 2. S3 (RustFS en tu máquina; aquí, S3 simulado con moto) ──
 S3 = {
     "default": {
         "BACKEND": "storages.backends.s3.S3Storage",

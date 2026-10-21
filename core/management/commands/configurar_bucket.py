@@ -1,11 +1,12 @@
 # core/management/commands/configurar_bucket.py
 import boto3
+from botocore.exceptions import ClientError
 from django.conf import settings
 from django.core.management import BaseCommand
 
 
 class Command(BaseCommand):
-    help = "Aplica al bucket de media las reglas de CORS y de caducidad (idempotente: se puede repetir)."
+    help = "Crea el bucket de media si no existe y le aplica las reglas de CORS y de caducidad (idempotente)."
 
     def handle(self, *args, **opciones):
         o = settings.STORAGES["default"]["OPTIONS"]
@@ -17,6 +18,15 @@ class Command(BaseCommand):
             region_name=o.get("region_name", "us-east-1"),
         )
         bucket = o["bucket_name"]
+
+        try:
+            # funciona aunque la clave solo tenga permiso sobre este bucket (R2)
+            s3.head_bucket(Bucket=bucket)
+        except ClientError as e:
+            if e.response["Error"]["Code"] not in ("404", "NoSuchBucket"):
+                raise  # 403: la clave no vale o no tiene permiso; no lo tapes creando nada
+            s3.create_bucket(Bucket=bucket)
+            self.stdout.write(f"Bucket {bucket} creado")
 
         s3.put_bucket_cors(
             Bucket=bucket,
