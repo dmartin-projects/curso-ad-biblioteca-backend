@@ -42,6 +42,7 @@ LOCAL_APPS = [
     "prestamos",
     "notificaciones",
     "tickets",
+    "mensajeria",  # módulo 26, Parte C: eventos con RabbitMQ sin Celery
 ]
 # daphne el primero: runserver pasa a ser ASGI (módulo 25)
 INSTALLED_APPS = ["daphne", *DJANGO_APPS, *THIRD_PARTY_APPS, *LOCAL_APPS]
@@ -363,6 +364,9 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(hour=9, minute=0),
     },
 }
+
+# ── Eventos de dominio con RabbitMQ sin Celery, con kombu (módulo 26, Parte C) ──
+EVENTOS_BROKER_URL = env("EVENTOS_BROKER_URL", default=CELERY_BROKER_URL)  # el mismo RabbitMQ sirve
 
 # ── Monitorización de tareas periódicas (módulo 67): URL de ping de Healthchecks.io, o vacío ──
 HEALTHCHECK_MULTAS_URL = env("HEALTHCHECK_MULTAS_URL", default="")
